@@ -1,11 +1,11 @@
 import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
 
-const PROTECTED = ["/create", "/quiz", "/history"]
+const PUBLIC = ["/login", "/auth"]
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
-  const isProtected = PROTECTED.some((p) => pathname.startsWith(p))
+  const isPublic = PUBLIC.some((p) => pathname.startsWith(p))
 
   let supabaseResponse = NextResponse.next({ request })
 
@@ -30,7 +30,7 @@ export async function proxy(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  if (isProtected && !user) {
+  if (!isPublic && !user) {
     const loginUrl = request.nextUrl.clone()
     loginUrl.pathname = "/login"
     loginUrl.searchParams.set("next", pathname)
