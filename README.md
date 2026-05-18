@@ -1,36 +1,53 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Custom Quiz
+
+แอปสร้างและทำข้อสอบออนไลน์ พร้อม AI สร้างคำถามอัตโนมัติ
+
+**Production:** https://custom-quiz-rho.vercel.app
+
+## Stack
+
+- **Next.js 16** (App Router) + TypeScript
+- **Tailwind CSS v4**
+- **Supabase** — Auth (Email + Google OAuth) + Database
+- **Google Gemini** — AI สร้างคำถาม
 
 ## Getting Started
 
-First, run the development server:
+1. ติดตั้ง dependencies
+
+```bash
+npm install
+```
+
+2. ตั้งค่า environment variables
+
+```bash
+cp .env.example .env.local
+```
+
+แล้วใส่ค่าใน `.env.local` ตาม `.env.example`
+
+3. รัน dev server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+เปิด [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment Variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Variable | แหล่งที่มา |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase Dashboard → Settings → API |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase Dashboard → Settings → API |
+| `GEMINI_API_KEY` | [Google AI Studio](https://aistudio.google.com/app/apikey) |
 
-## Learn More
+## Supabase Setup
 
-To learn more about Next.js, take a look at the following resources:
+เพิ่ม Redirect URLs ใน Authentication → URL Configuration:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+https://custom-quiz-rho.vercel.app/auth/callback
+http://localhost:3000/**
+```
