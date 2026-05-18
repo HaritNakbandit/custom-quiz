@@ -1,8 +1,38 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #edf1fb;
+  --foreground: #0c1835;
+  --page-orb-1: rgba(29, 78, 216, 0.09);
+  --page-orb-2: rgba(14, 165, 233, 0.06);
+  --glass-bg: rgba(255, 255, 255, 0.82);
+  --glass-border: rgba(0, 0, 0, 0.07);
+  --glass-hover-bg: rgba(255, 255, 255, 0.96);
+  --glass-hover-border: rgba(37, 99, 235, 0.40);
+  --input-bg: rgba(0, 0, 0, 0.04);
+  --input-border: rgba(0, 0, 0, 0.10);
+  --input-focus-bg: rgba(37, 99, 235, 0.06);
+  --input-focus-border: rgba(37, 99, 235, 0.50);
+  --text-muted: rgba(12, 24, 53, 0.58);
+  --text-faint: rgba(12, 24, 53, 0.38);
+}
+
+.dark {
+  --background: #060e24;
+  --foreground: #dde5f8;
+  --page-orb-1: rgba(37, 99, 235, 0.22);
+  --page-orb-2: rgba(14, 165, 233, 0.13);
+  --glass-bg: rgba(255, 255, 255, 0.055);
+  --glass-border: rgba(255, 255, 255, 0.10);
+  --glass-hover-bg: rgba(255, 255, 255, 0.095);
+  --glass-hover-border: rgba(59, 130, 246, 0.45);
+  --input-bg: rgba(255, 255, 255, 0.07);
+  --input-border: rgba(255, 255, 255, 0.13);
+  --input-focus-bg: rgba(59, 130, 246, 0.10);
+  --input-focus-border: rgba(59, 130, 246, 0.60);
+  --text-muted: rgba(221, 229, 248, 0.70);
+  --text-faint: rgba(221, 229, 248, 0.48);
 }
 
 @theme inline {
@@ -12,15 +42,58 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Arial, sans-serif;
+  transition: background 0.3s, color 0.3s;
+}
+
+button, [role="button"] {
+  cursor: pointer;
+}
+
+@keyframes float-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-float-up { animation: float-up 0.4s ease both; }
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.94); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.animate-scale-in { animation: scale-in 0.3s ease both; }
+
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+}
+
+.glass-hover {
+  transition: background 0.2s, border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+.glass-hover:hover {
+  background: var(--glass-hover-bg);
+  border-color: var(--glass-hover-border);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(37, 99, 235, 0.15);
+}
+
+.quiz-input {
+  width: 100%;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  color: var(--foreground);
+  transition: border-color 0.15s, background 0.15s;
+  outline: none;
+}
+.quiz-input::placeholder { color: var(--text-muted); }
+.quiz-input:focus {
+  background: var(--input-focus-bg);
+  border-color: var(--input-focus-border);
 }

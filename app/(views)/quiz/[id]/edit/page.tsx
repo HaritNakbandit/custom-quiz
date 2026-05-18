@@ -1,0 +1,451 @@
+"use client"
+
+import { useState, useEffect, use } from "react"
+import { useRouter } from "next/navigation"
+import { ChevronLeft, Plus, Check, Sparkles } from "lucide-react"
+import { useCustomQuizzes } from "@/hooks/useCustomQuizzes"
+import { Quiz, Question } from "@/data/quizzes"
+import { createClient } from "@/lib/supabase/client"
+import { QuizIcon, ICON_LIST, COLOR_LIST, COLOR_MAP, ICON_MAP } from "@/lib/quizIcons"
+import AIGeneratePanel from "@/components/AIGeneratePanel"
+import { accentGradient, accentHover, accentShadow, accentShadowSm, accentLabel } from "@/lib/theme"
+
+interface DraftQuestion {
+  question: string
+  options: string[]
+  correctIndex: number
+  explanation: string
+}
+
+function emptyQuestion(): DraftQuestion {
+  return { question: "", options: ["", "", "", ""], correctIndex: 0, explanation: "" }
+}
+
+function toDraft(q: Question): DraftQuestion {
+  return {
+    question: q.question,
+    options: [...q.options],
+    correctIndex: q.correctIndex,
+    explanation: q.explanation ?? "",
+  }
+}
+
+
+export default function EditQuizPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params)
+  const router = useRouter()
+  const { updateQuiz } = useCustomQuizzes()
+
+  const [loaded, setLoaded] = useState(false)
+  const [quiz, setQuiz] = useState<Quiz | null>(null)
+
+  const [title, setTitle] = useState("")
+  const [description, setDescription] = useState("")
+  const [category, setCategory] = useState("")
+  const [icon, setIcon] = useState("BookOpen")
+  const [color, setColor] = useState("violet")
+  const [questions, setQuestions] = useState<DraftQuestion[]>([emptyQuestion()])
+  const [errors, setErrors] = useState<string[]>([])
+  const [saving, setSaving] = useState(false)
+  const [showAI, setShowAI] = useState(false)
+
+  function handleAIApply(result: { questions: DraftQuestion[]; suggestedTitle?: string; suggestedCategory?: string }) {
+    setQuestions(result.questions.map((q) => ({
+      question: q.question,
+      options: q.options,
+      correctIndex: q.correctIndex,
+      explanation: q.explanation ?? "",
+    })))
+    setShowAI(false)
+  }
+
+  useEffect(() => {
+    async function load() {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { router.replace("/login"); return }
+
+      const { data } = await supabase
+        .from("quizzes")
+        .select("*")
+        .eq("id", id)
+        .single()
+
+      if (!data || data.user_id !== user.id) {
+        router.replace("/")
+        return
+      }
+
+      const found = data as Quiz
+      setQuiz(found)
+      setTitle(found.title)
+      setDescription(found.description)
+      setCategory(found.category)
+      setIcon(found.icon)
+      setColor(found.color)
+      setQuestions(found.questions.map(toDraft))
+      setLoaded(true)
+    }
+    load()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id])
+
+  function updateQuestion(qi: number, field: keyof DraftQuestion, value: string | number) {
+    setQuestions((prev) =>
+      prev.map((q, i) => (i === qi ? { ...q, [field]: value } : q))
+    )
+  }
+
+  function updateOption(qi: number, oi: number, value: string) {
+    setQuestions((prev) =>
+      prev.map((q, i) =>
+        i === qi ? { ...q, options: q.options.map((o, j) => (j === oi ? value : o)) } : q
+      )
+    )
+  }
+
+  function addQuestion() {
+    setQuestions((prev) => [...prev, emptyQuestion()])
+  }
+
+  function removeQuestion(qi: number) {
+    setQuestions((prev) => prev.filter((_, i) => i !== qi))
+  }
+
+  function validate(): string[] {
+    const errs: string[] = []
+    if (!title.trim()) errs.push("กรุณาใส่ชื่อ quiz")
+    if (!category.trim()) errs.push("กรุณาใส่ category")
+    if (questions.length === 0) errs.push("กรุณาเพิ่มอย่างน้อย 1 คำถาม")
+    questions.forEach((q, i) => {
+      if (!q.question.trim()) errs.push(`คำถามที่ ${i + 1}: กรุณาใส่คำถาม`)
+      if (q.options.some((o) => !o.trim())) errs.push(`คำถามที่ ${i + 1}: กรุณาใส่ตัวเลือกให้ครบ`)
+    })
+    return errs
+  }
+
+  async function handleSubmit() {
+    const errs = validate()
+    if (errs.length > 0) {
+      setErrors(errs)
+      return
+    }
+    setErrors([])
+    setSaving(true)
+
+    const updated: Quiz = {
+      ...quiz!,
+      title: title.trim(),
+      description: description.trim() || "Custom quiz",
+      category: category.trim(),
+      icon,
+      color,
+      questions: questions.map(
+        (q, i): Question => ({
+          id: i + 1,
+          question: q.question.trim(),
+          options: q.options.map((o) => o.trim()),
+          correctIndex: q.correctIndex,
+          explanation: q.explanation.trim() || undefined,
+        })
+      ),
+    }
+
+    await updateQuiz(updated)
+    router.push("/")
+  }
+
+  if (!loaded) {
+    return (
+      <div className="min-h-screen bg-background px-4 py-12 relative overflow-hidden">
+        <div className="pointer-events-none absolute -top-32 left-1/4 w-125 h-125 rounded-full blur-[100px]" style={{ background: "var(--page-orb-1)" }} />
+        <div className="relative max-w-2xl mx-auto">
+          {/* Header skeleton */}
+          <div className="flex items-center gap-3 mb-10">
+            <div className="w-9 h-9 rounded-xl glass animate-pulse shrink-0" />
+            <div className="flex-1 space-y-2">
+              <div className="h-7 w-36 rounded-full glass animate-pulse" />
+              <div className="h-3.5 w-48 rounded-full glass animate-pulse" />
+            </div>
+            <div className="h-9 w-32 rounded-xl glass animate-pulse" />
+          </div>
+
+          {/* Quiz info card skeleton */}
+          <div className="glass rounded-2xl p-6 mb-5">
+            <div className="h-3 w-28 rounded-full bg-blue-500/20 animate-pulse mb-5" />
+            {/* Icon preview */}
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-16 h-16 rounded-2xl glass animate-pulse shrink-0" />
+              <div className="space-y-2">
+                <div className="h-4 w-32 rounded-full glass animate-pulse" />
+                <div className="h-3 w-44 rounded-full glass animate-pulse" />
+              </div>
+            </div>
+            {/* Icon grid */}
+            <div className="h-3 w-8 rounded-full glass animate-pulse mb-2" />
+            <div className="flex flex-wrap gap-2 mb-4">
+              {[...Array(10)].map((_, i) => (
+                <div key={i} className="w-10 h-10 rounded-xl glass animate-pulse" />
+              ))}
+            </div>
+            {/* Color swatches */}
+            <div className="h-3 w-4 rounded-full glass animate-pulse mb-2" />
+            <div className="flex gap-2 mb-5">
+              {[...Array(9)].map((_, i) => (
+                <div key={i} className="w-8 h-8 rounded-xl glass animate-pulse" />
+              ))}
+            </div>
+            {/* Inputs */}
+            <div className="space-y-4">
+              {[...Array(3)].map((_, i) => (
+                <div key={i}>
+                  <div className="h-3.5 w-24 rounded-full glass animate-pulse mb-1.5" />
+                  <div className="h-10 w-full rounded-xl glass animate-pulse" />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Question card skeleton */}
+          <div className="glass rounded-2xl p-6 mb-4">
+            <div className="h-3 w-20 rounded-full bg-blue-500/20 animate-pulse mb-5" />
+            <div className="space-y-4">
+              <div>
+                <div className="h-3.5 w-16 rounded-full glass animate-pulse mb-1.5" />
+                <div className="h-16 w-full rounded-xl glass animate-pulse" />
+              </div>
+              <div className="space-y-2">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <div className="w-6 h-6 rounded-full glass animate-pulse shrink-0" />
+                    <div className="flex-1 h-10 rounded-xl glass animate-pulse" />
+                  </div>
+                ))}
+              </div>
+              <div>
+                <div className="h-3.5 w-40 rounded-full glass animate-pulse mb-1.5" />
+                <div className="h-10 w-full rounded-xl glass animate-pulse" />
+              </div>
+            </div>
+          </div>
+
+          {/* Add + Save buttons skeleton */}
+          <div className="h-12 w-full rounded-2xl glass animate-pulse mb-4" />
+          <div className="h-14 w-full rounded-2xl glass animate-pulse" />
+        </div>
+      </div>
+    )
+  }
+
+  if (!quiz) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p style={{ color: "var(--text-muted)" }}>ไม่พบ quiz นี้ หรืออาจเป็น quiz ที่ไม่สามารถแก้ไขได้</p>
+      </div>
+    )
+  }
+
+  const inputCls = "quiz-input"
+
+  return (
+    <div className="min-h-screen bg-background px-4 py-12 relative overflow-hidden transition-colors duration-300">
+      <div className="pointer-events-none absolute -top-32 left-1/4 w-125 h-125 rounded-full blur-[100px]" style={{ background: "var(--page-orb-1)" }} />
+
+      <div className="relative max-w-2xl mx-auto">
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-10 animate-float-up">
+          <button
+            onClick={() => router.back()}
+            className="w-9 h-9 flex items-center justify-center rounded-xl glass hover:opacity-80 transition-opacity"
+            style={{ color: "var(--text-muted)" }}
+          >
+            <ChevronLeft size={18} />
+          </button>
+          <div className="flex-1">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">แก้ไข Quiz</h1>
+            <p className="text-sm" style={{ color: "var(--text-muted)" }}>{quiz.title}</p>
+          </div>
+          <button
+            onClick={() => setShowAI(true)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl bg-linear-to-r ${accentGradient} ${accentHover} text-white text-sm font-semibold transition-all shadow-lg ${accentShadowSm}`}
+          >
+            <Sparkles size={15} />
+            สร้างด้วย AI
+          </button>
+        </div>
+
+        {showAI && <AIGeneratePanel onApply={handleAIApply} onClose={() => setShowAI(false)} />}
+
+        {/* Errors */}
+        {errors.length > 0 && (
+          <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-2xl p-4 mb-6 animate-scale-in">
+            <ul className="space-y-1 text-sm text-red-600 dark:text-red-400">
+              {errors.map((e, i) => (
+                <li key={i} className="flex items-center gap-2">
+                  <span className="w-1 h-1 rounded-full bg-red-500 shrink-0" />
+                  {e}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* Quiz Info */}
+        <div className="glass rounded-2xl p-6 mb-5">
+          <h2 className={`text-xs font-semibold ${accentLabel} uppercase tracking-widest mb-5`}>ข้อมูลชุดคำถาม</h2>
+
+          <div className="mb-5">
+            <div className="flex items-center gap-4 mb-4">
+              <QuizIcon icon={icon} color={color} size="lg" />
+              <div>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">ไอคอนชุดคำถาม</p>
+                <p className="text-xs" style={{ color: "var(--text-muted)" }}>เลือก icon และสีด้านล่าง</p>
+              </div>
+            </div>
+
+            <label className="text-xs font-semibold uppercase tracking-wider mb-2 block" style={{ color: "var(--text-muted)" }}>Icon</label>
+            <div className="flex flex-wrap gap-2 mb-4">
+              {ICON_LIST.map((name) => {
+                const Icon = ICON_MAP[name]
+                const selected = icon === name
+                return (
+                  <button
+                    key={name}
+                    onClick={() => setIcon(name)}
+                    title={name}
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-105 ${
+                      selected
+                        ? `bg-linear-to-br ${COLOR_MAP[color].gradient} text-white`
+                        : "bg-black/5 dark:bg-white/8 text-gray-400 dark:text-white/40 hover:text-gray-700 dark:hover:text-white/70"
+                    }`}
+                  >
+                    <Icon size={18} strokeWidth={1.8} />
+                  </button>
+                )
+              })}
+            </div>
+
+            <label className="text-xs font-semibold uppercase tracking-wider mb-2 block" style={{ color: "var(--text-muted)" }}>สี</label>
+            <div className="flex flex-wrap gap-2">
+              {COLOR_LIST.map((c) => (
+                <button
+                  key={c}
+                  onClick={() => setColor(c)}
+                  className={`w-8 h-8 rounded-xl bg-linear-to-br transition-all hover:scale-110 ${COLOR_MAP[c].gradient} ${
+                    color === c ? "ring-2 ring-offset-2 ring-offset-transparent ring-white/60 scale-110" : ""
+                  }`}
+                  title={c}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm mb-1.5 block" style={{ color: "var(--text-muted)" }}>ชื่อ Quiz *</label>
+              <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="เช่น ประวัติศาสตร์ไทย" className={inputCls} />
+            </div>
+            <div>
+              <label className="text-sm mb-1.5 block" style={{ color: "var(--text-muted)" }}>คำอธิบาย</label>
+              <input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="อธิบายสั้นๆ เกี่ยวกับ quiz นี้" className={inputCls} />
+            </div>
+            <div>
+              <label className="text-sm mb-1.5 block" style={{ color: "var(--text-muted)" }}>Category *</label>
+              <input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="เช่น History, Science, General" className={inputCls} />
+            </div>
+          </div>
+        </div>
+
+        {/* Questions */}
+        <div className="space-y-4 mb-5">
+          {questions.map((q, qi) => (
+            <div key={qi} className="glass rounded-2xl p-6">
+              <div className="flex items-center justify-between mb-5">
+                <span className={`text-xs font-semibold ${accentLabel} uppercase tracking-widest`}>
+                  คำถามที่ {qi + 1}
+                </span>
+                {questions.length > 1 && (
+                  <button
+                    onClick={() => removeQuestion(qi)}
+                    className="text-xs text-red-400 hover:text-red-500 dark:hover:text-red-300 transition-colors"
+                  >
+                    ลบคำถามนี้
+                  </button>
+                )}
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm mb-1.5 block" style={{ color: "var(--text-muted)" }}>คำถาม *</label>
+                  <textarea
+                    value={q.question}
+                    onChange={(e) => updateQuestion(qi, "question", e.target.value)}
+                    placeholder="ใส่คำถามที่นี่..."
+                    rows={2}
+                    className={`${inputCls} resize-none`}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm mb-2 block" style={{ color: "var(--text-muted)" }}>
+                    ตัวเลือก * — <span className="text-emerald-600 dark:text-emerald-400/80">คลิกวงกลมเพื่อระบุคำตอบที่ถูก</span>
+                  </label>
+                  <div className="space-y-2">
+                    {q.options.map((opt, oi) => (
+                      <div key={oi} className="flex items-center gap-3">
+                        <button
+                          onClick={() => updateQuestion(qi, "correctIndex", oi)}
+                          className={`w-6 h-6 rounded-full border-2 shrink-0 transition-all flex items-center justify-center ${
+                            q.correctIndex === oi
+                              ? "border-emerald-500 bg-emerald-500"
+                              : "border-black/20 dark:border-white/20 hover:border-emerald-500/60"
+                          }`}
+                        >
+                          {q.correctIndex === oi && <Check size={12} className="text-white" strokeWidth={3} />}
+                        </button>
+                        <input
+                          value={opt}
+                          onChange={(e) => updateOption(qi, oi, e.target.value)}
+                          placeholder={`ตัวเลือก ${String.fromCharCode(65 + oi)}`}
+                          className={inputCls}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-sm mb-1.5 block" style={{ color: "var(--text-muted)" }}>คำอธิบายเฉลย (ไม่บังคับ)</label>
+                  <input
+                    value={q.explanation}
+                    onChange={(e) => updateQuestion(qi, "explanation", e.target.value)}
+                    placeholder="อธิบายเหตุผลของคำตอบที่ถูก..."
+                    className={inputCls}
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Add question */}
+        <button
+          onClick={addQuestion}
+          className={`w-full py-3.5 rounded-2xl border border-dashed border-blue-500/40 ${accentLabel} hover:border-blue-600/70 hover:bg-blue-50 dark:hover:bg-blue-500/5 transition-all font-medium mb-6 flex items-center justify-center gap-2`}
+        >
+          <Plus size={16} strokeWidth={2.5} />
+          เพิ่มคำถาม
+        </button>
+
+        {/* Submit */}
+        <button
+          onClick={handleSubmit}
+          disabled={saving}
+          className={`w-full py-4 rounded-2xl bg-linear-to-r ${accentGradient} ${accentHover} disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-base transition-all shadow-lg ${accentShadow}`}
+        >
+          {saving ? "กำลังบันทึก..." : "บันทึกการแก้ไข"}
+        </button>
+      </div>
+    </div>
+  )
+}
