@@ -48,11 +48,13 @@ hooks/
   useProfile.ts          # Returns { role, isAdmin } for current user
 lib/
   config.ts              # AI_MODEL, AI_MODEL_DISPLAY constants
+  theme.ts               # Accent color constants — edit here to retheme entire app
   quizIcons.tsx          # QuizIcon component, ICON_MAP (20 lucide icons), COLOR_MAP (9 themes)
   supabase/
     client.ts            # createClient() — browser Supabase client
     server.ts            # createClient() — server Supabase client (uses cookies)
-proxy.ts                 # Protects /create /quiz /history — redirects to /login if unauthenticated
+proxy.ts                 # Next.js 16 middleware — all routes require auth except /login and /auth
+.env.example             # Template for required environment variables
 ```
 
 ## Key Conventions
@@ -65,6 +67,16 @@ const supabase = createClient()   // top of file, outside component
 export default function MyComponent() { ... }
 ```
 Creating it inside the component causes a new instance per render and triggers `react-hooks/exhaustive-deps` warnings.
+
+### Accent color — lib/theme.ts
+All accent color Tailwind classes are exported from `lib/theme.ts`. **Never hardcode** blue/indigo gradient strings directly in components — always import from theme:
+```ts
+import { accentGradient, accentHover, accentShadow, accentLabel } from "@/lib/theme"
+// usage: className={`bg-linear-to-r ${accentGradient} ${accentHover} ...`}
+```
+To retheme the whole app, edit `lib/theme.ts` only. Also update `--page-orb-1/2`, `--glass-hover-border`, `--input-focus-border` in `globals.css`.
+
+Exported constants: `accentGradient`, `accentHover`, `accentIconGradient`, `accentHeroGradient`, `accentHeroDark`, `accentShadow`, `accentShadowSm`, `accentShadowLight`, `accentText`, `accentLabel`, `accentDot`
 
 ### CSS Variables (globals.css)
 All theming goes through CSS variables. Never hardcode colors that should respond to theme.
@@ -143,7 +155,8 @@ interface QuizAttempt {
 - **admin**: can see "สร้าง Quiz ใหม่" button, can create/edit/delete own quizzes
 - **user**: can take quizzes, view history; cannot access `/create` or edit any quiz
 - Edit page enforces ownership: checks `quiz.user_id === auth.uid()` and redirects if mismatch
-- Protected routes in `proxy.ts`: `/create`, `/quiz`, `/history`
+- All routes require auth — `proxy.ts` uses a public-only list: `/login`, `/auth`
+- Everything else redirects to `/login?next=<path>` if unauthenticated
 
 ### Quiz Taking Flow
 1. User navigates freely between questions using prev/next arrows or clicking step dots
@@ -176,3 +189,18 @@ npm run dev    # http://localhost:3000
 npm run build
 npm run lint
 ```
+
+## Production
+**URL:** https://custom-quiz-rho.vercel.app  
+**Platform:** Vercel (auto-deploy from main branch)
+
+### Supabase OAuth setup
+Both URLs must be in Supabase → Authentication → URL Configuration → Redirect URLs:
+```
+https://custom-quiz-rho.vercel.app/auth/callback
+http://localhost:3000/**
+```
+The `/**` wildcard is required for local dev because `redirectTo` includes `?next=<path>` query param.
+
+## Next.js 16 — proxy.ts replaces middleware.ts
+In Next.js 16, `middleware.ts` was renamed to `proxy.ts` with exported function `proxy` (not `middleware`). The functionality is identical. Do not create `middleware.ts` — it will be ignored.

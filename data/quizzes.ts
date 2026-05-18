@@ -1,3 +1,10 @@
+export interface DraftQuestion {
+  question: string
+  options: string[]
+  correctIndex: number
+  explanation: string
+}
+
 export interface Question {
   id: number
   question: string

@@ -6,19 +6,21 @@ import { Sparkles } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { accentGradient, accentHover, accentIconGradient, accentHeroGradient, accentHeroDark, accentShadow, accentShadowLight } from "@/lib/theme"
 
+const supabase = createClient()
+
 function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const next = searchParams.get("next") ?? "/"
 
   const [mode, setMode] = useState<"login" | "signup">("login")
+  const [step, setStep] = useState<"form" | "verify">("form")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
-  const [success, setSuccess] = useState("")
-
-  const supabase = createClient()
+  const [needsVerify, setNeedsVerify] = useState(false)
+  const [resent, setResent] = useState(false)
 
   async function handleGoogleLogin() {
     const { error } = await supabase.auth.signInWithOAuth({
@@ -34,26 +36,102 @@ function LoginForm() {
     e.preventDefault()
     setLoading(true)
     setError("")
-    setSuccess("")
+    setNeedsVerify(false)
 
     if (mode === "login") {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) {
-        setError("อีเมลหรือรหัสผ่านไม่ถูกต้อง")
+        if (error.message.toLowerCase().includes("email not confirmed")) {
+          setNeedsVerify(true)
+          setError("กรุณายืนยันอีเมลก่อนเข้าสู่ระบบ")
+        } else {
+          setError("อีเมลหรือรหัสผ่านไม่ถูกต้อง")
+        }
       } else {
         router.push(next)
         router.refresh()
       }
     } else {
-      const { error } = await supabase.auth.signUp({ email, password })
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+      })
       if (error) {
         setError("ไม่สามารถสมัครสมาชิกได้ อาจมีบัญชีนี้อยู่แล้ว")
       } else {
-        setSuccess("ส่งอีเมลยืนยันแล้ว กรุณาตรวจสอบ inbox ของคุณ")
+        setStep("verify")
       }
     }
 
     setLoading(false)
+  }
+
+  async function handleResend() {
+    setLoading(true)
+    setResent(false)
+    await supabase.auth.resend({
+      type: "signup",
+      email,
+      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+    })
+    setResent(true)
+    setLoading(false)
+  }
+
+  if (step === "verify") {
+    return (
+      <div className="min-h-screen bg-[var(--background)] flex items-center justify-center px-4 relative overflow-hidden">
+        <div className="pointer-events-none absolute -top-40 -left-40 w-150 h-150 rounded-full blur-[120px]" style={{ background: "var(--page-orb-1)" }} />
+        <div className="pointer-events-none absolute bottom-0 -right-40 w-[500px] h-[500px] rounded-full blur-[120px]" style={{ background: "var(--page-orb-2)" }} />
+
+        <div className="relative w-full max-w-sm animate-float-up">
+          <div className="text-center mb-8">
+            <div className={`inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-linear-to-br ${accentIconGradient} mb-4 shadow-lg ${accentShadowLight}`}>
+              <Sparkles size={22} className="text-white" />
+            </div>
+            <h1 className={`text-2xl font-bold bg-linear-to-r ${accentHeroGradient} ${accentHeroDark} bg-clip-text text-transparent`}>
+              Custom Quiz
+            </h1>
+          </div>
+
+          <div className="glass rounded-3xl p-7 shadow-2xl shadow-black/10 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-500"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+            </div>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">ตรวจสอบอีเมลของคุณ</h2>
+            <p className="text-sm mb-1" style={{ color: "var(--text-muted)" }}>
+              ส่งลิงก์ยืนยันไปที่
+            </p>
+            <p className="text-sm font-semibold text-gray-900 dark:text-white mb-6">{email}</p>
+            <p className="text-xs mb-6" style={{ color: "var(--text-faint)" }}>
+              คลิกลิงก์ในอีเมลเพื่อเปิดใช้งานบัญชี หากไม่พบในกล่องจดหมาย ให้ตรวจสอบโฟลเดอร์ Spam
+            </p>
+
+            {resent && (
+              <p className="text-sm text-emerald-600 dark:text-emerald-400 mb-4">ส่งอีเมลยืนยันใหม่แล้ว</p>
+            )}
+
+            <button
+              onClick={handleResend}
+              disabled={loading}
+              className="w-full py-2.5 rounded-xl text-sm font-medium transition-all disabled:opacity-50"
+              style={{ background: "var(--input-bg)", color: "var(--text-muted)" }}
+            >
+              {loading ? "กำลังส่ง..." : "ส่งอีเมลยืนยันอีกครั้ง"}
+            </button>
+
+            <button
+              onClick={() => { setStep("form"); setMode("login") }}
+              className="w-full mt-2 py-2.5 rounded-xl text-sm font-medium transition-all hover:opacity-80"
+              style={{ color: "var(--text-faint)" }}
+            >
+              กลับไปหน้าเข้าสู่ระบบ
+            </button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -81,7 +159,7 @@ function LoginForm() {
             {(["login", "signup"] as const).map((m) => (
               <button
                 key={m}
-                onClick={() => { setMode(m); setError(""); setSuccess("") }}
+                onClick={() => { setMode(m); setError(""); setNeedsVerify(false) }}
                 className="flex-1 py-2 rounded-lg text-sm font-medium transition-all"
                 style={mode === m
                   ? { background: "var(--glass-hover-bg)", color: "var(--foreground)", boxShadow: "0 1px 4px rgba(0,0,0,0.10)" }
@@ -146,10 +224,20 @@ function LoginForm() {
             </div>
 
             {error && (
-              <p className="text-sm text-red-500 dark:text-red-400">{error}</p>
-            )}
-            {success && (
-              <p className="text-sm text-emerald-600 dark:text-emerald-400">{success}</p>
+              <div className="space-y-2">
+                <p className="text-sm text-red-500 dark:text-red-400">{error}</p>
+                {needsVerify && (
+                  <button
+                    type="button"
+                    onClick={handleResend}
+                    disabled={loading}
+                    className="text-sm font-medium underline underline-offset-2 disabled:opacity-50"
+                    style={{ color: "var(--text-muted)" }}
+                  >
+                    {loading ? "กำลังส่ง..." : "ส่งอีเมลยืนยันอีกครั้ง"}
+                  </button>
+                )}
+              </div>
             )}
 
             <button

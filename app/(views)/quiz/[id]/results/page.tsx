@@ -2,9 +2,10 @@
 
 import { useSearchParams, useRouter } from "next/navigation"
 import { use, Suspense, useEffect, useState } from "react"
-import { Check, X, ChevronLeft, Lightbulb } from "lucide-react"
+import { Check, X, Lightbulb } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { Quiz } from "@/data/quizzes"
+import { getGradeInfo } from "@/lib/gradeUtils"
 import { accentGradient, accentHover, accentShadow, accentLabel } from "@/lib/theme"
 
 const supabase = createClient()
@@ -26,14 +27,7 @@ function ResultsContent({ id }: { id: string }) {
       .then(({ data }) => { if (data) setQuiz(data as Quiz) })
   }, [id])
 
-  function getGrade() {
-    if (percent >= 80) return { label: "ยอดเยี่ยม!", emoji: "🏆", ringColor: "#f59e0b", glowColor: "rgba(245,158,11,0.15)" }
-    if (percent >= 60) return { label: "ดีมาก!", emoji: "🎉", ringColor: "#10b981", glowColor: "rgba(16,185,129,0.15)" }
-    if (percent >= 40) return { label: "พอใช้", emoji: "👍", ringColor: "#6366f1", glowColor: "rgba(99,102,241,0.15)" }
-    return { label: "ลองใหม่!", emoji: "💪", ringColor: "#f97316", glowColor: "rgba(249,115,22,0.15)" }
-  }
-
-  const grade = getGrade()
+  const grade = getGradeInfo(percent)
   const circumference = 2 * Math.PI * 15.9
 
   return (
@@ -49,7 +43,7 @@ function ResultsContent({ id }: { id: string }) {
           className="w-9 h-9 flex items-center justify-center rounded-xl glass hover:opacity-80 transition-opacity mb-8"
           style={{ color: "var(--text-muted)" }}
         >
-          <ChevronLeft size={18} />
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
         </button>
 
         {/* Score card */}
@@ -117,7 +111,6 @@ function ResultsContent({ id }: { id: string }) {
                 const isRight = selected === correct
                 return (
                   <div key={qi} className="glass rounded-2xl p-5">
-                    {/* Question header */}
                     <div className="flex items-start gap-3 mb-4">
                       <div className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
                         isRight ? "bg-emerald-500" : "bg-red-500"
@@ -137,7 +130,6 @@ function ResultsContent({ id }: { id: string }) {
                       </div>
                     </div>
 
-                    {/* Options */}
                     <div className="space-y-2 mb-3">
                       {q.options.map((opt, oi) => {
                         const isCorrectOpt = oi === correct
@@ -184,7 +176,6 @@ function ResultsContent({ id }: { id: string }) {
                       })}
                     </div>
 
-                    {/* Explanation */}
                     {q.explanation && (
                       <div className="flex gap-2.5 bg-indigo-50 dark:bg-indigo-500/8 border border-indigo-200 dark:border-indigo-500/15 rounded-xl px-3 py-2.5">
                         <Lightbulb size={14} className="text-indigo-500 dark:text-indigo-400 shrink-0 mt-0.5" />
@@ -198,7 +189,6 @@ function ResultsContent({ id }: { id: string }) {
               })}
             </div>
 
-            {/* Bottom actions */}
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => router.push(`/quiz/${id}`)}

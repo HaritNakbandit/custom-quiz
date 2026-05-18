@@ -3,38 +3,24 @@
 import { useState, useRef, useEffect } from "react"
 import { X, Sparkles, Send, RotateCcw, Check } from "lucide-react"
 import { AI_MODEL_DISPLAY } from "@/lib/config"
-import { accentIconGradient, accentGradient, accentHover } from "@/lib/theme"
-
-interface GeneratedQuestion {
-  question: string
-  options: string[]
-  correctIndex: number
-  explanation: string
-}
-
-interface GeneratedResult {
-  questions: GeneratedQuestion[]
-  suggestedTitle?: string
-  suggestedCategory?: string
-}
-
-interface Message {
-  role: "user" | "model"
-  content: string
-}
+import { accentIconGradient, accentGradient, accentHover, accentDot } from "@/lib/theme"
+import { useAIQuizGeneration, type GeneratedResult } from "@/hooks/useAIQuizGeneration"
 
 interface Props {
   onApply: (result: GeneratedResult) => void
   onClose: () => void
 }
 
+const suggestions = [
+  "สร้างคำถาม JavaScript 5 ข้อ",
+  "ข้อสอบประวัติศาสตร์ไทย 3 ข้อ",
+  "คำถาม React Hooks 5 ข้อ ระดับกลาง",
+  "ความรู้ทั่วไปวิทยาศาสตร์ 4 ข้อ",
+]
+
 export default function AIGeneratePanel({ onApply, onClose }: Props) {
   const [input, setInput] = useState("")
-  const [messages, setMessages] = useState<Message[]>([])
-  const [streaming, setStreaming] = useState(false)
-  const [streamBuffer, setStreamBuffer] = useState("")
-  const [parsed, setParsed] = useState<GeneratedResult | null>(null)
-  const [error, setError] = useState("")
+  const { messages, streaming, streamBuffer, parsed, error, send, reset } = useAIQuizGeneration()
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
 
@@ -49,45 +35,8 @@ export default function AIGeneratePanel({ onApply, onClose }: Props) {
   async function handleSend() {
     const text = input.trim()
     if (!text || streaming) return
-
-    const newMessages: Message[] = [...messages, { role: "user", content: text }]
-    setMessages(newMessages)
     setInput("")
-    setStreaming(true)
-    setStreamBuffer("")
-    setParsed(null)
-    setError("")
-
-    try {
-      const res = await fetch("/api/generate-quiz", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: newMessages }),
-      })
-
-      if (!res.ok) throw new Error("API error")
-
-      const reader = res.body!.getReader()
-      const decoder = new TextDecoder()
-      let full = ""
-
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-        full += decoder.decode(value, { stream: true })
-        setStreamBuffer(full)
-      }
-
-      const cleaned = full.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim()
-      const result: GeneratedResult = JSON.parse(cleaned)
-      setParsed(result)
-      setMessages((prev) => [...prev, { role: "model", content: full }])
-      setStreamBuffer("")
-    } catch {
-      setError("เกิดข้อผิดพลาด ลองใหม่อีกครั้ง")
-    } finally {
-      setStreaming(false)
-    }
+    await send(text)
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
@@ -96,21 +45,6 @@ export default function AIGeneratePanel({ onApply, onClose }: Props) {
       handleSend()
     }
   }
-
-  function handleReset() {
-    setMessages([])
-    setStreamBuffer("")
-    setParsed(null)
-    setError("")
-    setInput("")
-  }
-
-  const suggestions = [
-    "สร้างคำถาม JavaScript 5 ข้อ",
-    "ข้อสอบประวัติศาสตร์ไทย 3 ข้อ",
-    "คำถาม React Hooks 5 ข้อ ระดับกลาง",
-    "ความรู้ทั่วไปวิทยาศาสตร์ 4 ข้อ",
-  ]
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4" onClick={onClose}>
@@ -133,7 +67,7 @@ export default function AIGeneratePanel({ onApply, onClose }: Props) {
           <div className="flex items-center gap-1">
             {messages.length > 0 && (
               <button
-                onClick={handleReset}
+                onClick={reset}
                 className="w-7 h-7 flex items-center justify-center rounded-lg text-white/60 hover:bg-white/10 transition-colors"
                 title="เริ่มใหม่"
               >
@@ -188,9 +122,9 @@ export default function AIGeneratePanel({ onApply, onClose }: Props) {
               <div className="max-w-full w-full bg-white/5 border border-white/8 rounded-2xl rounded-tl-sm px-4 py-3">
                 {streaming && !streamBuffer && (
                   <div className="flex gap-1 items-center h-5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: "0ms" }} />
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: "150ms" }} />
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: "300ms" }} />
+                    <span className={`w-1.5 h-1.5 rounded-full ${accentDot} animate-bounce`} style={{ animationDelay: "0ms" }} />
+                    <span className={`w-1.5 h-1.5 rounded-full ${accentDot} animate-bounce`} style={{ animationDelay: "150ms" }} />
+                    <span className={`w-1.5 h-1.5 rounded-full ${accentDot} animate-bounce`} style={{ animationDelay: "300ms" }} />
                   </div>
                 )}
                 {streamBuffer && (
@@ -220,7 +154,7 @@ export default function AIGeneratePanel({ onApply, onClose }: Props) {
               </div>
               <div className="flex gap-2 pt-1">
                 <button
-                  onClick={() => { setParsed(null); setMessages([]) }}
+                  onClick={() => { reset() }}
                   className="flex-1 py-2 rounded-xl text-xs font-medium glass transition-all text-white/60 hover:text-white"
                 >
                   สร้างใหม่
@@ -235,9 +169,7 @@ export default function AIGeneratePanel({ onApply, onClose }: Props) {
             </div>
           )}
 
-          {error && (
-            <p className="text-sm text-center text-red-400">{error}</p>
-          )}
+          {error && <p className="text-sm text-center text-red-400">{error}</p>}
 
           <div ref={bottomRef} />
         </div>

@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation"
 import { FileText, ChevronRight, MoreVertical, Pencil, Trash2, X } from "lucide-react"
 import { useCustomQuizzes } from "@/hooks/useCustomQuizzes"
 import { QuizIcon } from "@/lib/quizIcons"
-import { accentLabel } from "@/lib/theme"
+import { accentLabel, accentMenuHover } from "@/lib/theme"
 
 function DeleteModal({ title, onConfirm, onCancel }: { title: string; onConfirm: () => void; onCancel: () => void }) {
   return (
@@ -84,7 +84,7 @@ function QuizMenu({ quizId, quizTitle, onDelete }: { quizId: string; quizTitle: 
           <div className="absolute right-0 top-8 z-20 w-36 glass rounded-xl overflow-hidden shadow-xl shadow-black/20 animate-scale-in">
             <button
               onClick={() => { setOpen(false); router.push(`/quiz/${quizId}/edit`) }}
-              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 dark:text-white/80 hover:bg-blue-500/10 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+              className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 dark:text-white/80 ${accentMenuHover} transition-colors`}
             >
               <Pencil size={14} />
               แก้ไข

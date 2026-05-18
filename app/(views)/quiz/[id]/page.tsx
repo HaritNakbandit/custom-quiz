@@ -7,7 +7,7 @@ import { ChevronLeft, ChevronRight, Send } from "lucide-react"
 import { Quiz } from "@/data/quizzes"
 import { createClient } from "@/lib/supabase/client"
 import { QuizIcon } from "@/lib/quizIcons"
-import { accentGradient } from "@/lib/theme"
+import { accentGradient, accentOptionSelected, accentOptionHover, accentOptionText, accentSkeletonLabel } from "@/lib/theme"
 
 const supabase = createClient()
 
@@ -56,7 +56,7 @@ export default function QuizPage({ params }: { params: Promise<{ id: string }> }
 
           {/* Card skeleton */}
           <div className="glass rounded-3xl p-7 mb-4">
-            <div className="h-3 w-24 rounded-full bg-blue-500/20 animate-pulse mb-4" />
+            <div className={`h-3 w-24 rounded-full ${accentSkeletonLabel} animate-pulse mb-4`} />
             <div className="space-y-2 mb-7">
               <div className="h-5 w-full rounded-full glass animate-pulse" />
               <div className="h-5 w-4/5 rounded-full glass animate-pulse" />
@@ -190,8 +190,8 @@ export default function QuizPage({ params }: { params: Promise<{ id: string }> }
                   onClick={() => handleSelect(index)}
                   className={`w-full text-left px-4 py-3.5 rounded-2xl border transition-all duration-200 flex items-center gap-3.5 cursor-pointer ${
                     isSelected
-                      ? "border-blue-500/60 bg-blue-50 dark:border-blue-600/40 dark:bg-blue-500/10"
-                      : "border-black/8 dark:border-white/8 hover:border-blue-500 hover:bg-blue-50 dark:hover:border-blue-600/50 dark:hover:bg-blue-500/8"
+                      ? accentOptionSelected
+                      : `border-black/8 dark:border-white/8 ${accentOptionHover}`
                   }`}
                 >
                   <span className={`w-7 h-7 rounded-xl flex items-center justify-center text-xs font-bold shrink-0 transition-all duration-200 ${
@@ -202,7 +202,7 @@ export default function QuizPage({ params }: { params: Promise<{ id: string }> }
                     {String.fromCharCode(65 + index)}
                   </span>
                   <span
-                    className={`leading-snug text-sm font-medium ${isSelected ? "text-blue-800 dark:text-blue-200" : ""}`}
+                    className={`leading-snug text-sm font-medium ${isSelected ? accentOptionText : ""}`}
                     style={!isSelected ? { color: "var(--foreground)" } : {}}
                   >
                     {option}

@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { ChevronLeft, RotateCcw, Inbox } from "lucide-react"
+import { RotateCcw, Inbox } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { QuizIcon, COLOR_MAP } from "@/lib/quizIcons"
+import { getGradeInfo } from "@/lib/gradeUtils"
+import ScoreBar from "@/components/ScoreBar"
 import { accentGradient, accentHover } from "@/lib/theme"
 
 interface QuizAttempt {
@@ -23,19 +25,11 @@ const supabase = createClient()
 function formatDate(iso: string) {
   const d = new Date(iso)
   const now = new Date()
-  const diffMs = now.getTime() - d.getTime()
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+  const diffDays = Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24))
   const time = d.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" })
   if (diffDays === 0) return `วันนี้ ${time}`
   if (diffDays === 1) return `เมื่อวาน ${time}`
   return d.toLocaleDateString("th-TH", { day: "numeric", month: "short" }) + ` ${time}`
-}
-
-function getGradeColor(percent: number) {
-  if (percent >= 80) return { text: "text-amber-500", bg: "bg-amber-500/10 border-amber-500/20" }
-  if (percent >= 60) return { text: "text-emerald-500", bg: "bg-emerald-500/10 border-emerald-500/20" }
-  if (percent >= 40) return { text: "text-indigo-500", bg: "bg-indigo-500/10 border-indigo-500/20" }
-  return { text: "text-orange-500", bg: "bg-orange-500/10 border-orange-500/20" }
 }
 
 export default function HistoryPage() {
@@ -66,7 +60,7 @@ export default function HistoryPage() {
             className="w-9 h-9 flex items-center justify-center rounded-xl glass hover:opacity-80 transition-opacity"
             style={{ color: "var(--text-muted)" }}
           >
-            <ChevronLeft size={18} />
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
           </button>
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">ประวัติการทำข้อสอบ</h1>
@@ -119,7 +113,7 @@ export default function HistoryPage() {
           <div className="space-y-3 animate-float-up">
             {attempts.map((a) => {
               const percent = Math.round((a.score / a.total) * 100)
-              const gradeColor = getGradeColor(percent)
+              const grade = getGradeInfo(percent)
               const colorCls = COLOR_MAP[a.quiz_color]?.gradient ?? COLOR_MAP.violet.gradient
 
               return (
@@ -130,20 +124,14 @@ export default function HistoryPage() {
                     <p className="font-semibold text-gray-900 dark:text-white text-sm truncate mb-1.5">
                       {a.quiz_title}
                     </p>
-                    {/* Score bar */}
-                    <div className="w-full rounded-full h-1.5 mb-1.5" style={{ background: "var(--input-bg)" }}>
-                      <div
-                        className={`bg-linear-to-r ${colorCls} h-full rounded-full`}
-                        style={{ width: `${percent}%` }}
-                      />
-                    </div>
-                    <p className="text-xs" style={{ color: "var(--text-faint)" }}>
+                    <ScoreBar percent={percent} gradient={colorCls} height="h-1.5" />
+                    <p className="text-xs mt-1.5" style={{ color: "var(--text-faint)" }}>
                       {formatDate(a.created_at)}
                     </p>
                   </div>
 
                   <div className="flex flex-col items-end gap-2 shrink-0">
-                    <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${gradeColor.bg} ${gradeColor.text}`}>
+                    <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${grade.bgCls} ${grade.textCls}`}>
                       {percent}%
                     </span>
                     <span className="text-xs font-medium" style={{ color: "var(--text-muted)" }}>

@@ -29,9 +29,14 @@ Read `node_modules/next/dist/docs/` for the exact Next.js version in use. APIs a
 - Supabase browser client must be created at **module level** (singleton), not inside components or hooks
 
 ## Auth & roles
-- `proxy.ts` protects `/create`, `/quiz`, `/history` — redirects to `/login` if unauthenticated
+- `proxy.ts` is Next.js 16's replacement for `middleware.ts` — do NOT create `middleware.ts`
+- All routes require auth; public-only list is `/login` and `/auth` in `proxy.ts`
 - Admin check in UI: use `useProfile().isAdmin` — never hardcode email/uid
 - Edit page enforces ownership at load time: redirects to `/` if `quiz.user_id !== currentUser.id`
+
+## Accent color theming
+- All blue/indigo accent classes live in `lib/theme.ts` — import from there, never hardcode
+- To retheme: edit `lib/theme.ts` + update orb/border CSS vars in `globals.css`
 
 ## Quiz taking flow
 - Free navigation between questions (prev/next + clickable dots)
