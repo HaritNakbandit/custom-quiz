@@ -18,6 +18,36 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" })
 }
 
+function AdminUsersSkeleton() {
+  return (
+    <div className="min-h-screen bg-background px-4 py-12 relative overflow-hidden">
+      <div className="pointer-events-none absolute -top-32 left-1/4 w-125 h-125 rounded-full blur-[100px]" style={{ background: "var(--page-orb-1)" }} />
+      <div className="relative max-w-3xl mx-auto">
+        <div className="flex items-center gap-3 mb-10">
+          <div className="w-9 h-9 rounded-xl glass animate-pulse shrink-0" />
+          <div className="space-y-2 flex-1">
+            <div className="h-7 w-48 rounded-full glass animate-pulse" />
+            <div className="h-3.5 w-32 rounded-full glass animate-pulse" />
+          </div>
+        </div>
+        <div className="glass rounded-2xl overflow-hidden">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="flex items-center gap-4 px-6 py-4 border-b border-white/5 last:border-0">
+              <div className="w-8 h-8 rounded-full glass animate-pulse shrink-0" />
+              <div className="flex-1 space-y-1.5">
+                <div className="h-4 rounded-full glass animate-pulse" style={{ width: `${40 + i * 10}%` }} />
+                <div className="h-3 w-28 rounded-full glass animate-pulse" />
+              </div>
+              <div className="h-6 w-16 rounded-full glass animate-pulse" />
+              <div className="h-8 w-24 rounded-xl glass animate-pulse" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function AdminUsersPage() {
   const router = useRouter()
   const { isAdmin, loading: profileLoading } = useProfile()
@@ -48,35 +78,7 @@ export default function AdminUsersPage() {
     setUpdating(null)
   }
 
-  if (profileLoading || loading) {
-    return (
-      <div className="min-h-screen bg-background px-4 py-12 relative overflow-hidden">
-        <div className="pointer-events-none absolute -top-32 left-1/4 w-125 h-125 rounded-full blur-[100px]" style={{ background: "var(--page-orb-1)" }} />
-        <div className="relative max-w-3xl mx-auto">
-          <div className="flex items-center gap-3 mb-10">
-            <div className="w-9 h-9 rounded-xl glass animate-pulse shrink-0" />
-            <div className="space-y-2 flex-1">
-              <div className="h-7 w-48 rounded-full glass animate-pulse" />
-              <div className="h-3.5 w-32 rounded-full glass animate-pulse" />
-            </div>
-          </div>
-          <div className="glass rounded-2xl overflow-hidden">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="flex items-center gap-4 px-6 py-4 border-b border-white/5 last:border-0">
-                <div className="w-8 h-8 rounded-full glass animate-pulse shrink-0" />
-                <div className="flex-1 space-y-1.5">
-                  <div className="h-4 rounded-full glass animate-pulse" style={{ width: `${40 + i * 10}%` }} />
-                  <div className="h-3 w-28 rounded-full glass animate-pulse" />
-                </div>
-                <div className="h-6 w-16 rounded-full glass animate-pulse" />
-                <div className="h-8 w-24 rounded-xl glass animate-pulse" />
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    )
-  }
+  if (profileLoading || loading) return <AdminUsersSkeleton />
 
   const adminCount = users.filter((u) => u.role === "admin").length
 

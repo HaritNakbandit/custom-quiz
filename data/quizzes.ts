@@ -21,6 +21,8 @@ export interface Quiz {
   category: string
   icon: string
   color: string
+  cover_url?: string | null
   questions: Question[]
+  time_limit_seconds?: number | null
 }
 

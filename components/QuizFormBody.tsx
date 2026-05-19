@@ -1,6 +1,7 @@
 "use client"
 
-import { Plus, Check, ChevronDown } from "lucide-react"
+import { useState, useRef, useEffect } from "react"
+import { Plus, Check, ChevronDown, Timer, ImageIcon, X } from "lucide-react"
 import { QuizIcon, ICON_LIST, COLOR_LIST, COLOR_MAP, ICON_MAP } from "@/lib/quizIcons"
 import { accentLabel, accentDashedBorder } from "@/lib/theme"
 import type { useQuizForm } from "@/hooks/useQuizForm"
@@ -25,16 +26,83 @@ export default function QuizFormBody({ form }: Props) {
     icon, setIcon,
     color, setColor,
     questions,
+    timeLimitSeconds, setTimeLimitSeconds,
+    coverUrl, setCoverUrl,
+    pendingCoverFile, setPendingCoverFile,
     updateQuestion, updateOption, addQuestion, removeQuestion,
   } = form
 
   const inputCls = "quiz-input"
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [sizeError, setSizeError] = useState(false)
+
+  useEffect(() => {
+    return () => { if (previewUrl) URL.revokeObjectURL(previewUrl) }
+  }, [previewUrl])
+
+  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > 5 * 1024 * 1024) { setSizeError(true); return }
+    setSizeError(false)
+    if (previewUrl) URL.revokeObjectURL(previewUrl)
+    setPreviewUrl(URL.createObjectURL(file))
+    setPendingCoverFile(file)
+  }
+
+  function handleRemoveCover() {
+    if (previewUrl) URL.revokeObjectURL(previewUrl)
+    setPreviewUrl(null)
+    setPendingCoverFile(null)
+    setCoverUrl(null)
+    if (fileInputRef.current) fileInputRef.current.value = ""
+  }
+
+  const displayUrl = previewUrl ?? coverUrl
 
   return (
     <>
       {/* Quiz Info */}
       <div className="glass rounded-2xl p-6 mb-5">
         <h2 className={`text-xs font-semibold ${accentLabel} uppercase tracking-widest mb-5`}>ข้อมูลชุดคำถาม</h2>
+
+        {/* Cover Image */}
+        <div className="mb-5">
+          <label className="text-xs font-semibold uppercase tracking-wider mb-2 block" style={{ color: "var(--text-muted)" }}>Cover Image</label>
+          {displayUrl ? (
+            <div className="relative rounded-2xl overflow-hidden h-36">
+              <img src={displayUrl} alt="cover" className="w-full h-full object-cover" />
+              <button
+                onClick={handleRemoveCover}
+                className="absolute top-2 right-2 w-7 h-7 bg-black/50 hover:bg-black/70 rounded-lg flex items-center justify-center transition-colors"
+              >
+                <X size={14} className="text-white" />
+              </button>
+              {pendingCoverFile && (
+                <span className="absolute bottom-2 left-2 text-xs bg-black/50 text-white px-2 py-0.5 rounded-full">
+                  รอ save
+                </span>
+              )}
+            </div>
+          ) : (
+            <label className="flex flex-col items-center justify-center h-32 rounded-2xl border border-dashed border-black/15 dark:border-white/15 cursor-pointer hover:bg-black/3 dark:hover:bg-white/5 transition-colors">
+              <ImageIcon size={20} style={{ color: "var(--text-faint)" }} />
+              <span className="text-xs mt-2" style={{ color: "var(--text-faint)" }}>คลิกเพื่อเลือกรูป cover</span>
+              <span className="text-xs mt-0.5" style={{ color: "var(--text-faint)" }}>PNG, JPG, WebP · สูงสุด 5MB</span>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+            </label>
+          )}
+          {sizeError && (
+            <p className="text-xs mt-2 text-red-500 dark:text-red-400">ไฟล์ต้องมีขนาดไม่เกิน 5MB</p>
+          )}
+        </div>
 
         {/* Icon + Color picker */}
         <div className="mb-5">
@@ -119,6 +187,40 @@ export default function QuizFormBody({ form }: Props) {
                 className={`${inputCls} mt-2`}
                 autoFocus
               />
+            )}
+          </div>
+
+          {/* Timer */}
+          <div>
+            <div className="flex items-center justify-between">
+              <label className="text-sm flex items-center gap-1.5" style={{ color: "var(--text-muted)" }}>
+                <Timer size={14} />
+                จำกัดเวลา
+              </label>
+              <button
+                type="button"
+                onClick={() => setTimeLimitSeconds(timeLimitSeconds !== null ? null : 300)}
+                className="w-11 h-6 rounded-full transition-colors relative shrink-0"
+                style={{ background: timeLimitSeconds !== null ? "#3b82f6" : "var(--input-bg)", border: "1px solid var(--glass-border)" }}
+              >
+                <span
+                  className="absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all"
+                  style={{ left: timeLimitSeconds !== null ? "calc(100% - 1.375rem)" : "0.125rem" }}
+                />
+              </button>
+            </div>
+            {timeLimitSeconds !== null && (
+              <div className="flex items-center gap-2 mt-2">
+                <input
+                  type="number"
+                  min={1}
+                  max={120}
+                  value={Math.round(timeLimitSeconds / 60)}
+                  onChange={(e) => setTimeLimitSeconds(Math.max(1, Number(e.target.value)) * 60)}
+                  className={`${inputCls} w-24 text-center`}
+                />
+                <span className="text-sm" style={{ color: "var(--text-muted)" }}>นาที</span>
+              </div>
             )}
           </div>
         </div>

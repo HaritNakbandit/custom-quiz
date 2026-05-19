@@ -62,5 +62,16 @@ export function useCustomQuizzes() {
     [customQuizzes]
   )
 
-  return { customQuizzes, loading, userId, saveQuiz, updateQuiz, deleteQuiz, getQuiz }
+  const uploadCoverImage = useCallback(async (file: File): Promise<string | null> => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return null
+    const ext = file.name.split(".").pop()
+    const path = `${user.id}/${Date.now()}.${ext}`
+    const { data, error } = await supabase.storage.from("quiz-covers").upload(path, file, { upsert: true })
+    if (error || !data) return null
+    const { data: { publicUrl } } = supabase.storage.from("quiz-covers").getPublicUrl(data.path)
+    return publicUrl
+  }, [])
+
+  return { customQuizzes, loading, userId, saveQuiz, updateQuiz, deleteQuiz, getQuiz, uploadCoverImage }
 }
