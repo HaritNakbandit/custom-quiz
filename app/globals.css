@@ -97,3 +97,6 @@ button, [role="button"] {
   background: var(--input-focus-bg);
   border-color: var(--input-focus-border);
 }
+
+.scrollbar-none { scrollbar-width: none; }
+.scrollbar-none::-webkit-scrollbar { display: none; }

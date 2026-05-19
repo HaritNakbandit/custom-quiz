@@ -24,7 +24,8 @@ Rules:
 - Generate exactly the number of questions requested (default 5 if not specified)
 - Always 4 options per question
 - correctIndex is 0–3
-- If user writes in Thai, respond in Thai. If English, respond in English.`
+- If user writes in Thai, respond in Thai. If English, respond in English.
+- suggestedCategory must be exactly one of: General, Programming, Science, Math, History, Language, Geography, Business, Technology, Sports, Art, Entertainment`
 
 export async function POST(req: NextRequest) {
   const { messages } = await req.json()

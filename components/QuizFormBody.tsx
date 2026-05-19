@@ -1,9 +1,15 @@
 "use client"
 
-import { Plus, Check } from "lucide-react"
+import { Plus, Check, ChevronDown } from "lucide-react"
 import { QuizIcon, ICON_LIST, COLOR_LIST, COLOR_MAP, ICON_MAP } from "@/lib/quizIcons"
 import { accentLabel, accentDashedBorder } from "@/lib/theme"
 import type { useQuizForm } from "@/hooks/useQuizForm"
+
+const CATEGORIES = [
+  "General", "Programming", "Science", "Math",
+  "History", "Language", "Geography", "Business",
+  "Technology", "Sports", "Art", "Entertainment",
+]
 
 type FormState = ReturnType<typeof useQuizForm>
 
@@ -88,7 +94,32 @@ export default function QuizFormBody({ form }: Props) {
           </div>
           <div>
             <label className="text-sm mb-1.5 block" style={{ color: "var(--text-muted)" }}>Category *</label>
-            <input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="เช่น History, Science, General" className={inputCls} />
+            <div className="relative">
+              <select
+                value={CATEGORIES.includes(category) ? category : category ? "__custom__" : ""}
+                onChange={(e) => {
+                  if (e.target.value === "__custom__") setCategory("")
+                  else setCategory(e.target.value)
+                }}
+                className={`${inputCls} appearance-none pr-9`}
+              >
+                <option value="" disabled>เลือก category...</option>
+                {CATEGORIES.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+                <option value="__custom__">กำหนดเอง...</option>
+              </select>
+              <ChevronDown size={15} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--text-faint)" }} />
+            </div>
+            {!CATEGORIES.includes(category) && (
+              <input
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                placeholder="พิมพ์ category..."
+                className={`${inputCls} mt-2`}
+                autoFocus
+              />
+            )}
           </div>
         </div>
       </div>
