@@ -1,3 +1,9 @@
+# [1.3.0](https://github.com/HaritNakbandit/custom-quiz/compare/v1.2.0...v1.3.0) (2026-05-19)
+
+
+### Features
+
+* add search/filter, forgot password, category dropdown ([eb1a02d](https://github.com/HaritNakbandit/custom-quiz/commit/eb1a02de1f5d9c17910412b5a7438d04c41eb09c))
 
 # [1.1.0](https://github.com/HaritNakbandit/custom-quiz/compare/v1.0.0...v1.1.0) (2026-05-18)
 
