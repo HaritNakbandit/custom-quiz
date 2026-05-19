@@ -1,11 +1,11 @@
 import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
 
-const PUBLIC = ["/login", "/auth"]
+const PUBLIC_PREFIXES = ["/login", "/auth", "/reset-password"]
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
-  const isPublic = PUBLIC.some((p) => pathname.startsWith(p))
+  const isPublic = pathname === "/" || PUBLIC_PREFIXES.some((p) => pathname.startsWith(p))
 
   let supabaseResponse = NextResponse.next({ request })
 

@@ -1,10 +1,24 @@
+import Link from "next/link"
+import { Sparkles } from "lucide-react"
+import { createClient } from "@/lib/supabase/server"
 import QuizGrid from "@/components/QuizGrid"
 import ThemeToggle from "@/components/ThemeToggle"
 import UserMenu from "@/components/UserMenu"
 import CreateQuizButton from "@/components/CreateQuizButton"
-import { accentHeroGradient, accentHeroDark, accentText, accentDot } from "@/lib/theme"
+import {
+  accentGradient,
+  accentHover,
+  accentShadowLight,
+  accentHeroGradient,
+  accentHeroDark,
+  accentText,
+  accentDot,
+} from "@/lib/theme"
 
-export default function Home() {
+export default async function Home() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
   return (
     <div className="min-h-screen bg-[var(--background)] relative overflow-hidden transition-colors duration-300">
       {/* Background glow orbs */}
@@ -13,7 +27,7 @@ export default function Home() {
 
       {/* Top right controls */}
       <div className="absolute top-5 right-6 z-10 flex items-center gap-2">
-        <UserMenu />
+        {user && <UserMenu />}
         <ThemeToggle />
       </div>
 
@@ -30,10 +44,21 @@ export default function Home() {
           <p className="text-lg mb-10" style={{ color: "var(--text-muted)" }}>
             เลือก quiz ที่คุณต้องการ หรือสร้างชุดคำถามของตัวเอง
           </p>
-          <CreateQuizButton />
+
+          {user ? (
+            <CreateQuizButton />
+          ) : (
+            <Link
+              href="/login"
+              className={`inline-flex items-center gap-2 bg-linear-to-r ${accentGradient} ${accentHover} text-white font-semibold px-8 py-3.5 rounded-2xl transition-all shadow-lg ${accentShadowLight} hover:-translate-y-0.5`}
+            >
+              <Sparkles size={16} />
+              เริ่มเลย
+            </Link>
+          )}
         </div>
 
-        <QuizGrid />
+        {user && <QuizGrid />}
       </div>
     </div>
   )
