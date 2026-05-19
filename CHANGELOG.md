@@ -1,3 +1,11 @@
+# [1.4.0](https://github.com/HaritNakbandit/custom-quiz/compare/v1.3.0...v1.4.0) (2026-05-19)
+
+
+### Features
+
+* add cover image support via Supabase Storage ([92ce28f](https://github.com/HaritNakbandit/custom-quiz/commit/92ce28f73d478603849ae53d4d9e39fccec24aa2))
+* add timed mode and skeleton component refactor ([08c949c](https://github.com/HaritNakbandit/custom-quiz/commit/08c949c363d00d8f57462b22e548d3f2d896499f))
+
 # [1.3.0](https://github.com/HaritNakbandit/custom-quiz/compare/v1.2.0...v1.3.0) (2026-05-19)
 
 
