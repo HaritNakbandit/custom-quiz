@@ -125,7 +125,6 @@ export default function QuizPage({ params }: { params: Promise<{ id: string }> }
   const selectedOption = answers[currentIndex]
   const answeredCount = answers.filter((a) => a !== null).length
   const allAnswered = answeredCount === quiz.questions.length
-  const progress = (answeredCount / quiz.questions.length) * 100
 
   function formatTime(s: number) {
     const m = Math.floor(s / 60)
@@ -145,81 +144,97 @@ export default function QuizPage({ params }: { params: Promise<{ id: string }> }
       <div className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-175 h-100 rounded-full blur-[100px]" style={{ background: "var(--page-orb-1)" }} />
 
       <div className="w-full max-w-xl relative animate-float-up">
-        {/* Nav */}
-        <div className="flex items-center gap-3 mb-5">
-          <button
-            onClick={() => router.push("/")}
-            className="w-9 h-9 flex items-center justify-center rounded-xl glass hover:opacity-80 transition-opacity shrink-0"
-            style={{ color: "var(--text-muted)" }}
-          >
-            <ChevronLeft size={18} />
-          </button>
-          <div className="flex items-center gap-2.5 flex-1 min-w-0">
-            <QuizIcon icon={quiz.icon} color={quiz.color} size="sm" />
-            <span className="text-sm font-semibold truncate" style={{ color: "var(--foreground)" }}>{quiz.title}</span>
-          </div>
-          <span className="glass text-xs font-semibold px-3 py-1.5 rounded-full shrink-0" style={{ color: "var(--text-muted)" }}>
-            {answeredCount} <span style={{ color: "var(--text-faint)" }}>/ {quiz.questions.length}</span>
-          </span>
-        </div>
+        {/* Unified header card */}
+        {quiz.cover_url ? (
+          /* — with cover image — */
+          <div className="relative rounded-2xl overflow-hidden mb-5 h-56">
+            <img src={quiz.cover_url} alt={quiz.title} className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-linear-to-b from-black/50 via-black/5 to-black/75" />
 
-        {/* Timer card */}
-        {timeLeft !== null && quiz.time_limit_seconds && (
-          <div className={`rounded-2xl px-4 py-3 mb-4 transition-colors ${
-            timesUp || timeLeft < 30
-              ? "bg-red-500/10 border border-red-500/20"
-              : "glass"
-          }`}>
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-1.5">
-                <Timer size={14} className={timesUp || timeLeft < 30 ? "text-red-500 dark:text-red-400" : ""} style={!(timesUp || timeLeft < 30) ? { color: "var(--text-muted)" } : undefined} />
-                <span className={`text-xs font-medium ${timesUp || timeLeft < 30 ? "text-red-500 dark:text-red-400" : ""}`} style={!(timesUp || timeLeft < 30) ? { color: "var(--text-muted)" } : undefined}>
-                  {timesUp ? "หมดเวลา!" : "เวลาที่เหลือ"}
-                </span>
+            {/* Nav row */}
+            <div className="absolute inset-x-0 top-0 flex items-center gap-3 p-4">
+              <button
+                onClick={() => router.push("/")}
+                className="w-9 h-9 flex items-center justify-center rounded-xl bg-black/30 backdrop-blur-sm hover:bg-black/50 transition-colors shrink-0"
+              >
+                <ChevronLeft size={18} className="text-white" />
+              </button>
+              <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                <QuizIcon icon={quiz.icon} color={quiz.color} size="sm" />
+                <span className="text-sm font-semibold truncate text-white drop-shadow">{quiz.title}</span>
               </div>
-              <span className={`text-xl font-mono font-bold ${timesUp || timeLeft < 30 ? "text-red-500 dark:text-red-400" : ""}`} style={!(timesUp || timeLeft < 30) ? { color: "var(--foreground)" } : undefined}>
-                {timesUp ? "0:00" : formatTime(timeLeft)}
+              <span className="bg-black/30 backdrop-blur-sm text-white text-xs font-semibold px-3 py-1.5 rounded-full shrink-0">
+                {answeredCount} <span className="text-white/60">/ {quiz.questions.length}</span>
               </span>
             </div>
-            <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ background: "var(--input-bg)" }}>
-              <div
-                className={`h-full rounded-full transition-all duration-1000 ${
-                  timesUp || timeLeft < 30 ? "bg-red-500" : timeLeft < quiz.time_limit_seconds * 0.25 ? "bg-amber-500" : `bg-linear-to-r ${navyCls}`
-                }`}
-                style={{ width: `${Math.max(0, (timeLeft / quiz.time_limit_seconds) * 100)}%` }}
-              />
+
+            {/* Bottom: timer + progress */}
+            <div className="absolute inset-x-0 bottom-0 px-4 pb-4 space-y-2">
+              {timeLeft !== null && quiz.time_limit_seconds && (
+                <div className="flex items-center gap-3">
+                  <Timer size={16} className={timesUp || timeLeft < 30 ? "text-red-400" : "text-white/80"} />
+                  <div className="flex-1 h-1.5 rounded-full overflow-hidden bg-white/20">
+                    <div
+                      className={`h-full rounded-full transition-all duration-1000 ${timesUp || timeLeft < 30 ? "bg-red-400" : timeLeft < quiz.time_limit_seconds * 0.25 ? "bg-amber-400" : "bg-white"}`}
+                      style={{ width: `${Math.max(0, (timeLeft / quiz.time_limit_seconds) * 100)}%` }}
+                    />
+                  </div>
+                  <span className={`text-sm font-mono font-bold w-12 text-right ${timesUp || timeLeft < 30 ? "text-red-400" : "text-white"}`}>
+                    {timesUp ? "0:00" : formatTime(timeLeft)}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
-        )}
+        ) : (
+          /* — without cover image: glass card — */
+          <div className="glass rounded-2xl mb-5">
+            {/* Nav row */}
+            <div className="flex items-center gap-3 p-4">
+              <button
+                onClick={() => router.push("/")}
+                className="w-9 h-9 flex items-center justify-center rounded-xl glass hover:opacity-80 transition-opacity shrink-0"
+                style={{ color: "var(--text-muted)" }}
+              >
+                <ChevronLeft size={18} />
+              </button>
+              <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                <QuizIcon icon={quiz.icon} color={quiz.color} size="sm" />
+                <span className="text-sm font-semibold truncate" style={{ color: "var(--foreground)" }}>{quiz.title}</span>
+              </div>
+              <span className="glass text-xs font-semibold px-3 py-1.5 rounded-full shrink-0" style={{ color: "var(--text-muted)" }}>
+                {answeredCount} <span style={{ color: "var(--text-faint)" }}>/ {quiz.questions.length}</span>
+              </span>
+            </div>
 
-        {/* Progress bar + clickable step dots */}
-        <div className="mb-6">
-          <div className="w-full rounded-full h-1 overflow-hidden mb-3" style={{ background: "var(--input-bg)" }}>
-            <div
-              className={`bg-linear-to-r ${navyCls} h-full rounded-full transition-all duration-700`}
-              style={{ width: `${progress}%` }}
-            />
+            {/* Timer row */}
+            {timeLeft !== null && quiz.time_limit_seconds && (
+              <>
+                <div className="h-px mx-4" style={{ background: "var(--glass-border)" }} />
+                <div className={`px-4 py-3 transition-colors rounded-b-2xl ${timesUp || timeLeft < 30 ? "bg-red-500/8" : ""}`}>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <div className="flex items-center gap-1.5">
+                      <Timer size={13} className={timesUp || timeLeft < 30 ? "text-red-500 dark:text-red-400" : ""} style={!(timesUp || timeLeft < 30) ? { color: "var(--text-muted)" } : undefined} />
+                      <span className={`text-xs font-medium ${timesUp || timeLeft < 30 ? "text-red-500 dark:text-red-400" : ""}`} style={!(timesUp || timeLeft < 30) ? { color: "var(--text-muted)" } : undefined}>
+                        {timesUp ? "หมดเวลา!" : "เวลาที่เหลือ"}
+                      </span>
+                    </div>
+                    <span className={`text-base font-mono font-bold ${timesUp || timeLeft < 30 ? "text-red-500 dark:text-red-400" : ""}`} style={!(timesUp || timeLeft < 30) ? { color: "var(--foreground)" } : undefined}>
+                      {timesUp ? "0:00" : formatTime(timeLeft)}
+                    </span>
+                  </div>
+                  <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--input-bg)" }}>
+                    <div
+                      className={`h-full rounded-full transition-all duration-1000 ${timesUp || timeLeft < 30 ? "bg-red-500" : timeLeft < quiz.time_limit_seconds * 0.25 ? "bg-amber-500" : `bg-linear-to-r ${navyCls}`}`}
+                      style={{ width: `${Math.max(0, (timeLeft / quiz.time_limit_seconds) * 100)}%` }}
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+
           </div>
-          <div className="flex gap-1.5 justify-center">
-            {quiz.questions.map((_, i) => {
-              const isAnswered = answers[i] !== null
-              const isCurrent = i === currentIndex
-              return (
-                <button
-                  key={i}
-                  onClick={() => setCurrentIndex(i)}
-                  className={`rounded-full transition-all duration-300 ${
-                    isCurrent
-                      ? `h-1.5 w-7 bg-linear-to-r ${navyCls}`
-                      : isAnswered
-                      ? `h-1.5 w-4 bg-linear-to-r ${navyCls} opacity-50`
-                      : "h-1.5 w-1.5 bg-black/10 dark:bg-white/10 hover:bg-black/20 dark:hover:bg-white/20"
-                  }`}
-                />
-              )
-            })}
-          </div>
-        </div>
+        )}
 
         {/* Question card */}
         <div className="glass rounded-3xl p-7 mb-4">

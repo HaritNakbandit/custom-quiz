@@ -79,7 +79,7 @@ function DeleteModal({ title, onConfirm, onCancel }: { title: string; onConfirm:
   )
 }
 
-function QuizMenu({ quizId, quizTitle, onDelete }: { quizId: string; quizTitle: string; onDelete: () => void }) {
+function QuizMenu({ quizId, quizTitle, onDelete, onCover }: { quizId: string; quizTitle: string; onDelete: () => void; onCover?: boolean }) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -98,8 +98,8 @@ function QuizMenu({ quizId, quizTitle, onDelete }: { quizId: string; quizTitle: 
       <div ref={ref} className="relative" onClick={(e) => e.stopPropagation()}>
         <button
           onClick={() => setOpen((v) => !v)}
-          className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors"
-          style={{ color: "var(--text-muted)" }}
+          className={`w-7 h-7 flex items-center justify-center rounded-lg transition-colors ${onCover ? "text-white hover:bg-white/15" : "hover:bg-white/10"}`}
+          style={!onCover ? { color: "var(--text-muted)" } : undefined}
         >
           <MoreVertical size={15} />
         </button>
@@ -246,49 +246,60 @@ export default function QuizGrid() {
               >
                 <div
                   onClick={() => router.push(`/quiz/${quiz.id}`)}
-                  className="glass glass-hover rounded-2xl p-6 h-full cursor-pointer"
+                  className="relative rounded-2xl h-full cursor-pointer overflow-hidden flex flex-col glass glass-hover"
                 >
-                  <div className="flex items-start justify-between mb-4">
-                    <QuizIcon icon={quiz.icon} color={quiz.color} size="md" />
-                    <div className="flex items-center gap-2">
-                      <span className={`text-xs font-semibold ${accentLabel} uppercase tracking-widest`}>
-                        {quiz.category}
-                      </span>
-                      {isOwner && (
-                        <>
-                          <span className="text-xs font-medium bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full">
-                            ของฉัน
-                          </span>
-                          <QuizMenu
-                            quizId={quiz.id}
-                            quizTitle={quiz.title}
-                            onDelete={() => deleteQuiz(quiz.id)}
-                          />
-                        </>
-                      )}
-                    </div>
-                  </div>
+                  {/* Cover background */}
+                  {quiz.cover_url && (
+                    <>
+                      <img src={quiz.cover_url} alt={quiz.title} className="absolute inset-0 w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-linear-to-b from-black/55 via-black/60 to-black/85" />
+                    </>
+                  )}
 
-                  <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-1.5">{quiz.title}</h2>
-                  <p className="text-sm mb-5 leading-relaxed" style={{ color: "var(--text-muted)" }}>{quiz.description}</p>
-
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3" style={{ color: "var(--text-faint)" }}>
-                      <span className="flex items-center gap-1.5 text-sm">
-                        <FileText size={14} />
-                        {quiz.questions.length} คำถาม
-                      </span>
-                      {quiz.time_limit_seconds && (
-                        <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-red-500/10 text-red-500 dark:text-red-400">
-                          <Timer size={11} />
-                          {Math.round(quiz.time_limit_seconds / 60)} นาที
+                  <div className="relative p-6 flex flex-col flex-1">
+                    <div className="flex items-start justify-between mb-4">
+                      <QuizIcon icon={quiz.icon} color={quiz.color} size="md" />
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs font-semibold uppercase tracking-widest ${quiz.cover_url ? "text-white" : accentLabel}`}>
+                          {quiz.category}
                         </span>
-                      )}
+                        {isOwner && (
+                          <>
+                            <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${quiz.cover_url ? "bg-white/15 text-white border-white/20" : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"}`}>
+                              ของฉัน
+                            </span>
+                            <QuizMenu
+                              quizId={quiz.id}
+                              quizTitle={quiz.title}
+                              onDelete={() => deleteQuiz(quiz.id)}
+                              onCover={!!quiz.cover_url}
+                            />
+                          </>
+                        )}
+                      </div>
                     </div>
-                    <span className={`text-xs ${accentLabel} opacity-70 group-hover:opacity-100 transition-all flex items-center gap-0.5 font-medium`}>
-                      เริ่มทำ
-                      <ChevronRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
-                    </span>
+
+                    <h2 className={`text-lg font-bold mb-1.5 ${quiz.cover_url ? "text-white drop-shadow-md" : "text-gray-900 dark:text-white"}`}>{quiz.title}</h2>
+                    <p className={`text-sm leading-relaxed flex-1 ${quiz.cover_url ? "text-white drop-shadow" : ""}`} style={!quiz.cover_url ? { color: "var(--text-muted)" } : {}}>{quiz.description}</p>
+
+                    <div className="flex items-center justify-between mt-4">
+                      <div className={`flex items-center gap-3 ${quiz.cover_url ? "text-white" : ""}`} style={!quiz.cover_url ? { color: "var(--text-faint)" } : {}}>
+                        <span className="flex items-center gap-1.5 text-sm">
+                          <FileText size={14} />
+                          {quiz.questions.length} คำถาม
+                        </span>
+                        {quiz.time_limit_seconds && (
+                          <span className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded-full ${quiz.cover_url ? "bg-white/15 text-white" : "bg-red-500/10 text-red-500 dark:text-red-400"}`}>
+                            <Timer size={11} />
+                            {Math.round(quiz.time_limit_seconds / 60)} นาที
+                          </span>
+                        )}
+                      </div>
+                      <span className={`text-xs opacity-70 group-hover:opacity-100 transition-all flex items-center gap-0.5 font-medium ${quiz.cover_url ? "text-white" : accentLabel}`}>
+                        เริ่มทำ
+                        <ChevronRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>

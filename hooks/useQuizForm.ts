@@ -38,6 +38,8 @@ export function useQuizForm(initial?: Quiz | null) {
     initial ? initial.questions.map(toDraftQuestion) : [emptyQuestion()]
   )
   const [timeLimitSeconds, setTimeLimitSeconds] = useState<number | null>(initial?.time_limit_seconds ?? null)
+  const [coverUrl, setCoverUrl] = useState<string | null>(initial?.cover_url ?? null)
+  const [pendingCoverFile, setPendingCoverFile] = useState<File | null>(null)
   const [errors, setErrors] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
 
@@ -50,6 +52,8 @@ export function useQuizForm(initial?: Quiz | null) {
     setColor(initial.color)
     setQuestions(initial.questions.map(toDraftQuestion))
     setTimeLimitSeconds(initial.time_limit_seconds ?? null)
+    setCoverUrl(initial.cover_url ?? null)
+    setPendingCoverFile(null)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initial?.id])
 
@@ -100,6 +104,8 @@ export function useQuizForm(initial?: Quiz | null) {
     color, setColor,
     questions,
     timeLimitSeconds, setTimeLimitSeconds,
+    coverUrl, setCoverUrl,
+    pendingCoverFile, setPendingCoverFile,
     errors, setErrors,
     saving, setSaving,
     updateQuestion, updateOption, addQuestion, removeQuestion,
