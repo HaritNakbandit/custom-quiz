@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { LogOut, User, Clock } from "lucide-react"
+import { LogOut, User, Clock, Shield } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
+import { useProfile } from "@/hooks/useProfile"
 import { accentIconGradient } from "@/lib/theme"
 import type { User as SupabaseUser } from "@supabase/supabase-js"
 
@@ -13,6 +14,7 @@ export default function UserMenu() {
   const [user, setUser] = useState<SupabaseUser | null>(null)
   const [open, setOpen] = useState(false)
   const router = useRouter()
+  const { isAdmin } = useProfile()
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUser(data.user))
@@ -56,6 +58,18 @@ export default function UserMenu() {
               <Clock size={14} style={{ color: "var(--text-muted)" }} />
               ประวัติการทำข้อสอบ
             </button>
+            {isAdmin && (
+              <>
+                <div className="h-px mx-3" style={{ background: "var(--glass-border)" }} />
+                <button
+                  onClick={() => { setOpen(false); router.push("/admin/users") }}
+                  className="w-full flex items-center gap-2.5 px-4 py-3 text-sm transition-colors hover:bg-violet-500/8 text-violet-600 dark:text-violet-400"
+                >
+                  <Shield size={14} />
+                  จัดการผู้ใช้
+                </button>
+              </>
+            )}
             <div className="h-px mx-3" style={{ background: "var(--glass-border)" }} />
             <button
               onClick={handleLogout}

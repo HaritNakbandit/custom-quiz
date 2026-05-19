@@ -3,12 +3,19 @@
 import Link from "next/link"
 import { Plus } from "lucide-react"
 import { useProfile } from "@/hooks/useProfile"
+import { useCustomQuizzes } from "@/hooks/useCustomQuizzes"
 import { accentGradient, accentHover, accentShadowLight } from "@/lib/theme"
 
 export default function CreateQuizButton() {
-  const { isAdmin, loading } = useProfile()
+  const { isAdmin, role, loading: profileLoading } = useProfile()
+  const { customQuizzes, userId, loading: quizzesLoading } = useCustomQuizzes()
 
-  if (loading || !isAdmin) return null
+  if (profileLoading || quizzesLoading) return null
+
+  const myQuizCount = customQuizzes.filter((q) => q.user_id === userId).length
+  const canCreate = isAdmin || (role === "user" && myQuizCount === 0)
+
+  if (!canCreate) return null
 
   return (
     <Link
