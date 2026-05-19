@@ -1,6 +1,6 @@
 "use client"
 
-import { Plus, Check, ChevronDown } from "lucide-react"
+import { Plus, Check, ChevronDown, Timer } from "lucide-react"
 import { QuizIcon, ICON_LIST, COLOR_LIST, COLOR_MAP, ICON_MAP } from "@/lib/quizIcons"
 import { accentLabel, accentDashedBorder } from "@/lib/theme"
 import type { useQuizForm } from "@/hooks/useQuizForm"
@@ -25,6 +25,7 @@ export default function QuizFormBody({ form }: Props) {
     icon, setIcon,
     color, setColor,
     questions,
+    timeLimitSeconds, setTimeLimitSeconds,
     updateQuestion, updateOption, addQuestion, removeQuestion,
   } = form
 
@@ -119,6 +120,40 @@ export default function QuizFormBody({ form }: Props) {
                 className={`${inputCls} mt-2`}
                 autoFocus
               />
+            )}
+          </div>
+
+          {/* Timer */}
+          <div>
+            <div className="flex items-center justify-between">
+              <label className="text-sm flex items-center gap-1.5" style={{ color: "var(--text-muted)" }}>
+                <Timer size={14} />
+                จำกัดเวลา
+              </label>
+              <button
+                type="button"
+                onClick={() => setTimeLimitSeconds(timeLimitSeconds !== null ? null : 300)}
+                className="w-11 h-6 rounded-full transition-colors relative shrink-0"
+                style={{ background: timeLimitSeconds !== null ? "#3b82f6" : "var(--input-bg)", border: "1px solid var(--glass-border)" }}
+              >
+                <span
+                  className="absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all"
+                  style={{ left: timeLimitSeconds !== null ? "calc(100% - 1.375rem)" : "0.125rem" }}
+                />
+              </button>
+            </div>
+            {timeLimitSeconds !== null && (
+              <div className="flex items-center gap-2 mt-2">
+                <input
+                  type="number"
+                  min={1}
+                  max={120}
+                  value={Math.round(timeLimitSeconds / 60)}
+                  onChange={(e) => setTimeLimitSeconds(Math.max(1, Number(e.target.value)) * 60)}
+                  className={`${inputCls} w-24 text-center`}
+                />
+                <span className="text-sm" style={{ color: "var(--text-muted)" }}>นาที</span>
+              </div>
             )}
           </div>
         </div>

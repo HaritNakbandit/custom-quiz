@@ -3,10 +3,34 @@
 import { useState, useMemo, useRef, useEffect } from "react"
 import { createPortal } from "react-dom"
 import { useRouter } from "next/navigation"
-import { FileText, ChevronRight, MoreVertical, Pencil, Trash2, X, Search } from "lucide-react"
+import { FileText, ChevronRight, MoreVertical, Pencil, Trash2, X, Search, Timer } from "lucide-react"
 import { useCustomQuizzes } from "@/hooks/useCustomQuizzes"
 import { QuizIcon } from "@/lib/quizIcons"
 import { accentLabel, accentMenuHover, accentGradient, accentText } from "@/lib/theme"
+
+function QuizGridSkeleton() {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      {[...Array(6)].map((_, i) => (
+        <div key={i} className="glass rounded-2xl p-6 animate-pulse">
+          <div className="flex items-start justify-between mb-4">
+            <div className="w-12 h-12 rounded-2xl bg-black/8 dark:bg-white/8" />
+            <div className="h-3.5 w-16 rounded-full bg-black/8 dark:bg-white/8 mt-1" />
+          </div>
+          <div className="h-5 w-3/4 rounded-full bg-black/8 dark:bg-white/8 mb-2" />
+          <div className="space-y-1.5 mb-5">
+            <div className="h-3.5 w-full rounded-full bg-black/5 dark:bg-white/5" />
+            <div className="h-3.5 w-2/3 rounded-full bg-black/5 dark:bg-white/5" />
+          </div>
+          <div className="flex items-center justify-between">
+            <div className="h-3.5 w-16 rounded-full bg-black/8 dark:bg-white/8" />
+            <div className="h-3.5 w-12 rounded-full bg-black/8 dark:bg-white/8" />
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
 
 function DeleteModal({ title, onConfirm, onCancel }: { title: string; onConfirm: () => void; onCancel: () => void }) {
   return (
@@ -132,29 +156,7 @@ export default function QuizGrid() {
     })
   }, [customQuizzes, search, activeCategory])
 
-  if (loading) {
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {[...Array(6)].map((_, i) => (
-          <div key={i} className="glass rounded-2xl p-6 animate-pulse">
-            <div className="flex items-start justify-between mb-4">
-              <div className="w-12 h-12 rounded-2xl bg-black/8 dark:bg-white/8" />
-              <div className="h-3.5 w-16 rounded-full bg-black/8 dark:bg-white/8 mt-1" />
-            </div>
-            <div className="h-5 w-3/4 rounded-full bg-black/8 dark:bg-white/8 mb-2" />
-            <div className="space-y-1.5 mb-5">
-              <div className="h-3.5 w-full rounded-full bg-black/5 dark:bg-white/5" />
-              <div className="h-3.5 w-2/3 rounded-full bg-black/5 dark:bg-white/5" />
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="h-3.5 w-16 rounded-full bg-black/8 dark:bg-white/8" />
-              <div className="h-3.5 w-12 rounded-full bg-black/8 dark:bg-white/8" />
-            </div>
-          </div>
-        ))}
-      </div>
-    )
-  }
+  if (loading) return <QuizGridSkeleton />
 
   return (
     <div>
@@ -271,9 +273,17 @@ export default function QuizGrid() {
                   <p className="text-sm mb-5 leading-relaxed" style={{ color: "var(--text-muted)" }}>{quiz.description}</p>
 
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5 text-sm" style={{ color: "var(--text-faint)" }}>
-                      <FileText size={14} />
-                      {quiz.questions.length} คำถาม
+                    <div className="flex items-center gap-3" style={{ color: "var(--text-faint)" }}>
+                      <span className="flex items-center gap-1.5 text-sm">
+                        <FileText size={14} />
+                        {quiz.questions.length} คำถาม
+                      </span>
+                      {quiz.time_limit_seconds && (
+                        <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-red-500/10 text-red-500 dark:text-red-400">
+                          <Timer size={11} />
+                          {Math.round(quiz.time_limit_seconds / 60)} นาที
+                        </span>
+                      )}
                     </div>
                     <span className={`text-xs ${accentLabel} opacity-70 group-hover:opacity-100 transition-all flex items-center gap-0.5 font-medium`}>
                       เริ่มทำ

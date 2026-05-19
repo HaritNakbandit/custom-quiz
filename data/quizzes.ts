@@ -22,5 +22,6 @@ export interface Quiz {
   icon: string
   color: string
   questions: Question[]
+  time_limit_seconds?: number | null
 }
 

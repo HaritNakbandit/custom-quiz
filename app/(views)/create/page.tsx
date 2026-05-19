@@ -39,6 +39,7 @@ export default function CreateQuizPage() {
       icon: form.icon,
       color: form.color,
       questions: form.questions.map((q, i) => toQuestion(q, i + 1)),
+      time_limit_seconds: form.timeLimitSeconds,
     })
     router.push("/")
   }

@@ -22,6 +22,28 @@ interface QuizAttempt {
 
 const supabase = createClient()
 
+function HistorySkeleton() {
+  return (
+    <div className="space-y-3">
+      {[...Array(4)].map((_, i) => (
+        <div key={i} className="glass rounded-2xl p-4 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl glass animate-pulse shrink-0" />
+          <div className="flex-1 min-w-0 space-y-2">
+            <div className="h-4 rounded-full glass animate-pulse" style={{ width: `${45 + i * 12}%` }} />
+            <div className="h-1.5 w-full rounded-full glass animate-pulse" />
+            <div className="h-3 w-28 rounded-full glass animate-pulse" />
+          </div>
+          <div className="flex flex-col items-end gap-2 shrink-0">
+            <div className="h-6 w-12 rounded-full glass animate-pulse" />
+            <div className="h-3 w-8 rounded-full glass animate-pulse" />
+          </div>
+          <div className="w-9 h-9 rounded-xl glass animate-pulse shrink-0" />
+        </div>
+      ))}
+    </div>
+  )
+}
+
 function formatDate(iso: string) {
   const d = new Date(iso)
   const now = new Date()
@@ -70,26 +92,7 @@ export default function HistoryPage() {
           </div>
         </div>
 
-        {/* Skeleton */}
-        {loading && (
-          <div className="space-y-3">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="glass rounded-2xl p-4 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl glass animate-pulse shrink-0" />
-                <div className="flex-1 min-w-0 space-y-2">
-                  <div className="h-4 rounded-full glass animate-pulse" style={{ width: `${45 + i * 12}%` }} />
-                  <div className="h-1.5 w-full rounded-full glass animate-pulse" />
-                  <div className="h-3 w-28 rounded-full glass animate-pulse" />
-                </div>
-                <div className="flex flex-col items-end gap-2 shrink-0">
-                  <div className="h-6 w-12 rounded-full glass animate-pulse" />
-                  <div className="h-3 w-8 rounded-full glass animate-pulse" />
-                </div>
-                <div className="w-9 h-9 rounded-xl glass animate-pulse shrink-0" />
-              </div>
-            ))}
-          </div>
-        )}
+        {loading && <HistorySkeleton />}
 
         {/* Empty state */}
         {!loading && attempts.length === 0 && (
