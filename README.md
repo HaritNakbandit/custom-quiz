@@ -37,11 +37,12 @@ npm run dev
 
 ## Environment Variables
 
-| Variable | แหล่งที่มา |
-|---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase Dashboard → Settings → API |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase Dashboard → Settings → API |
-| `GEMINI_API_KEY` | [Google AI Studio](https://aistudio.google.com/app/apikey) |
+| Variable | แหล่งที่มา | หมายเหตุ |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase Dashboard → Settings → API | |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase Dashboard → Settings → API | |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase Dashboard → Settings → API | server-only ห้ามใช้ `NEXT_PUBLIC_` |
+| `GEMINI_API_KEY` | [Google AI Studio](https://aistudio.google.com/app/apikey) | |
 
 ## Supabase Setup
 
