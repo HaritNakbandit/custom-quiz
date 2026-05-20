@@ -10,7 +10,6 @@
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.97.1",
     "@google/genai": "^2.4.0",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.106.0",
