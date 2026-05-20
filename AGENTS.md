@@ -20,8 +20,10 @@ This version has breaking changes — APIs, conventions, and file structure may 
 app/
   (views)/               # Route group — pages only, no URL impact
     page.tsx             # Home: quiz grid + hero + UserMenu (with history link)
+    admin/users/page.tsx # User role management (admin only)
     create/page.tsx      # Create new quiz form (admin only)
     history/page.tsx     # Quiz attempt history list
+    reset-password/page.tsx  # Password reset after email link
     quiz/[id]/
       page.tsx           # Quiz taking page (free nav, submit when all answered)
       edit/page.tsx      # Edit quiz (owner only — checks user_id at load)
@@ -31,6 +33,7 @@ app/
   auth/
     callback/route.ts    # Supabase OAuth callback handler
   api/
+    admin/users/route.ts # GET list users, PATCH toggle role (admin only)
     generate-quiz/route.ts  # POST — Gemini AI generation (streaming)
   globals.css            # CSS variables (:root / .dark), .glass, .glass-hover, .quiz-input, animations
   layout.tsx             # Root layout with ThemeProvider
@@ -39,17 +42,37 @@ components/
   AIGeneratePanel.tsx    # Chat-style modal for AI-powered quiz generation
   CreateQuizButton.tsx   # "สร้าง Quiz ใหม่" — visible to admin only
   UserMenu.tsx           # Email + dropdown: ประวัติการทำข้อสอบ, ออกจากระบบ
+  QuizFormBody.tsx       # Shared form fields for create and edit pages
+  ErrorAlert.tsx         # Inline error list display
+  ScoreBar.tsx           # Thin progress bar for score display
   ThemeProvider.tsx      # next-themes provider wrapper
   ThemeToggle.tsx        # Sun/Moon toggle button
-data/
-  quizzes.ts             # Quiz/Question TypeScript interfaces only (no hardcoded data)
+types/
+  quizzes.ts             # Quiz, Question, DraftQuestion, QuizAttempt interfaces
+  user.ts                # UserRecord interface (admin user management)
+  ai.ts                  # GeneratedQuestion, GeneratedResult interfaces (AI generation)
 hooks/
-  useCustomQuizzes.ts    # Supabase CRUD for `quizzes` table; returns userId
-  useProfile.ts          # Returns { role, isAdmin } for current user
+  shared/                # Hooks used by multiple pages AND components
+    useCustomQuizzes.ts  # Supabase CRUD for `quizzes` table; returns userId
+    useProfile.ts        # Returns { role, isAdmin } for current user
+  useAdminUsers.ts       # Fetch/toggle users for admin page; re-exports formatDate
+  useAuthFlow.ts         # Login/signup/forgot-password state machine
+  useCreateQuiz.ts       # Quota redirect + handleSubmit for create page
+  useEditQuiz.ts         # Auth/ownership load + handleSubmit for edit page
+  useQuizForm.ts         # All form field state for create/edit; re-exports quizUtils helpers
+  useQuizHistory.ts      # Fetch quiz_attempts; re-exports formatAttemptDate
+  useQuizResults.ts      # Parse searchParams + fetch quiz for results page
+  useQuizSession.ts      # Timer, answers, submit logic for quiz taking; re-exports formatTime
+  useResetPassword.ts    # Password update via Supabase auth
+  useAIQuizGeneration.ts # Streaming AI generation state
 lib/
   config.ts              # AI_MODEL, AI_MODEL_DISPLAY constants
-  theme.ts               # Accent color constants — edit here to retheme entire app
+  dateUtils.ts           # formatDate, formatAttemptDate, formatTime — pure, no deps
+  gradeUtils.ts          # getGradeInfo(percent) — returns grade label/color/emoji
   quizIcons.tsx          # QuizIcon component, ICON_MAP (20 lucide icons), COLOR_MAP (9 themes)
+  quizUtils.ts           # emptyQuestion, toDraftQuestion, toQuestion — pure data transforms
+  quizValidation.ts      # validateQuizForm — pure validation, returns string[]
+  theme.ts               # Accent color Tailwind constants — edit here to retheme entire app
   supabase/
     client.ts            # createClient() — browser Supabase client
     server.ts            # createClient() — server Supabase client (uses cookies)
@@ -147,14 +170,14 @@ interface QuizAttempt {
 | `profiles` | trigger on signup | owner only |
 | `quiz_attempts` | owner only (RLS) | owner only |
 
-- `profiles.role` is `'user'` by default; set to `'admin'` manually in dashboard
+- `profiles.role` is `'user'` by default; set to `'admin'` manually in dashboard or via `/admin/users`
 - Use `useProfile()` to get `{ role, isAdmin }` — never fetch profiles table directly
-- `quiz_attempts` is written from `quiz/[id]/page.tsx → handleSubmit` (not results page, to avoid duplicate on refresh)
+- `quiz_attempts` is written from `useQuizSession → handleSubmit` (not results page, to avoid duplicate on refresh)
 
 ### Roles & Access
-- **admin**: can see "สร้าง Quiz ใหม่" button, can create/edit/delete own quizzes
-- **user**: can take quizzes, view history; cannot access `/create` or edit any quiz
-- Edit page enforces ownership: checks `quiz.user_id === auth.uid()` and redirects if mismatch
+- **admin**: can see "สร้าง Quiz ใหม่" button, can create/edit/delete own quizzes, can access `/admin/users`
+- **user**: can take quizzes, view history; cannot access `/create`, `/admin`, or edit any quiz
+- Edit page enforces ownership: `useEditQuiz` checks `quiz.user_id === auth.uid()` and redirects if mismatch
 - All routes require auth — `proxy.ts` uses a public-only list: `/login`, `/auth`
 - Everything else redirects to `/login?next=<path>` if unauthenticated
 

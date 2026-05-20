@@ -1,42 +1,18 @@
 "use client"
 
-import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Sparkles, CheckCircle } from "lucide-react"
-import { createClient } from "@/lib/supabase/client"
 import { accentGradient, accentHover, accentIconGradient, accentHeroGradient, accentHeroDark, accentShadowLight } from "@/lib/theme"
-
-const supabase = createClient()
+import { useResetPassword } from "@/hooks/useResetPassword"
 
 export default function ResetPasswordPage() {
   const router = useRouter()
-  const [password, setPassword] = useState("")
-  const [confirm, setConfirm] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
-  const [done, setDone] = useState(false)
-
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    if (password !== confirm) {
-      setError("รหัสผ่านไม่ตรงกัน")
-      return
-    }
-    setLoading(true)
-    setError("")
-    const { error } = await supabase.auth.updateUser({ password })
-    setLoading(false)
-    if (error) {
-      setError("ไม่สามารถเปลี่ยนรหัสผ่านได้ ลิงก์อาจหมดอายุแล้ว")
-    } else {
-      setDone(true)
-    }
-  }
+  const { password, setPassword, confirm, setConfirm, loading, error, done, handleSubmit } = useResetPassword()
 
   return (
-    <div className="min-h-screen bg-[var(--background)] flex items-center justify-center px-4 relative overflow-hidden">
+    <div className="min-h-screen bg-background flex items-center justify-center px-4 relative overflow-hidden">
       <div className="pointer-events-none absolute -top-40 -left-40 w-150 h-150 rounded-full blur-[120px]" style={{ background: "var(--page-orb-1)" }} />
-      <div className="pointer-events-none absolute bottom-0 -right-40 w-[500px] h-[500px] rounded-full blur-[120px]" style={{ background: "var(--page-orb-2)" }} />
+      <div className="pointer-events-none absolute bottom-0 -right-40 w-125 h-125 rounded-full blur-[120px]" style={{ background: "var(--page-orb-2)" }} />
 
       <div className="relative w-full max-w-sm animate-float-up">
         <div className="text-center mb-8">

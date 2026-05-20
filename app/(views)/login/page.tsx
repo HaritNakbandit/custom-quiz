@@ -1,94 +1,28 @@
 "use client"
 
-import { useState, Suspense } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { Suspense } from "react"
+import { useSearchParams } from "next/navigation"
 import { Sparkles } from "lucide-react"
-import { createClient } from "@/lib/supabase/client"
 import { accentGradient, accentHover, accentIconGradient, accentHeroGradient, accentHeroDark, accentShadowLight } from "@/lib/theme"
-
-const supabase = createClient()
+import { useAuthFlow } from "@/hooks/useAuthFlow"
 
 function LoginForm() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const next = searchParams.get("next") ?? "/"
 
-  const [mode, setMode] = useState<"login" | "signup">("login")
-  const [step, setStep] = useState<"form" | "verify" | "forgot" | "forgot-sent">("form")
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
-  const [needsVerify, setNeedsVerify] = useState(false)
-  const [resent, setResent] = useState(false)
-
-  async function handleGoogleLogin() {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=${next}`,
-      },
-    })
-    if (error) setError("ไม่สามารถเข้าสู่ระบบด้วย Google ได้")
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setLoading(true)
-    setError("")
-    setNeedsVerify(false)
-
-    if (mode === "login") {
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) {
-        if (error.message.toLowerCase().includes("email not confirmed")) {
-          setNeedsVerify(true)
-          setError("กรุณายืนยันอีเมลก่อนเข้าสู่ระบบ")
-        } else {
-          setError("อีเมลหรือรหัสผ่านไม่ถูกต้อง")
-        }
-      } else {
-        router.push(next)
-        router.refresh()
-      }
-    } else {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
-      })
-      if (error) {
-        setError("ไม่สามารถสมัครสมาชิกได้ อาจมีบัญชีนี้อยู่แล้ว")
-      } else {
-        setStep("verify")
-      }
-    }
-
-    setLoading(false)
-  }
-
-  async function handleForgotPassword(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    setLoading(true)
-    setError("")
-    await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
-    })
-    setLoading(false)
-    setStep("forgot-sent")
-  }
-
-  async function handleResend() {
-    setLoading(true)
-    setResent(false)
-    await supabase.auth.resend({
-      type: "signup",
-      email,
-      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
-    })
-    setResent(true)
-    setLoading(false)
-  }
+  const {
+    mode, step,
+    email, setEmail,
+    password, setPassword,
+    loading, error,
+    needsVerify, resent,
+    handleGoogleLogin,
+    handleSubmit,
+    handleForgotPassword,
+    handleResend,
+    goToForgot,
+    switchMode,
+  } = useAuthFlow(next)
 
   if (step === "forgot" || step === "forgot-sent") {
     return (
@@ -149,7 +83,7 @@ function LoginForm() {
               </>
             )}
             <button
-              onClick={() => { setStep("form"); setError("") }}
+              onClick={() => switchMode()}
               className="w-full mt-3 py-2.5 rounded-xl text-sm font-medium transition-all hover:opacity-80"
               style={{ color: "var(--text-faint)" }}
             >
@@ -182,9 +116,7 @@ function LoginForm() {
               <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-500"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
             </div>
             <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">ตรวจสอบอีเมลของคุณ</h2>
-            <p className="text-sm mb-1" style={{ color: "var(--text-muted)" }}>
-              ส่งลิงก์ยืนยันไปที่
-            </p>
+            <p className="text-sm mb-1" style={{ color: "var(--text-muted)" }}>ส่งลิงก์ยืนยันไปที่</p>
             <p className="text-sm font-semibold text-gray-900 dark:text-white mb-6">{email}</p>
             <p className="text-xs mb-6" style={{ color: "var(--text-faint)" }}>
               คลิกลิงก์ในอีเมลเพื่อเปิดใช้งานบัญชี หากไม่พบในกล่องจดหมาย ให้ตรวจสอบโฟลเดอร์ Spam
@@ -204,7 +136,7 @@ function LoginForm() {
             </button>
 
             <button
-              onClick={() => { setStep("form"); setMode("login") }}
+              onClick={switchMode}
               className="w-full mt-2 py-2.5 rounded-xl text-sm font-medium transition-all hover:opacity-80"
               style={{ color: "var(--text-faint)" }}
             >
@@ -241,7 +173,7 @@ function LoginForm() {
             {(["login", "signup"] as const).map((m) => (
               <button
                 key={m}
-                onClick={() => { setMode(m); setError(""); setNeedsVerify(false) }}
+                onClick={switchMode}
                 className="flex-1 py-2 rounded-lg text-sm font-medium transition-all"
                 style={mode === m
                   ? { background: "var(--glass-hover-bg)", color: "var(--foreground)", boxShadow: "0 1px 4px rgba(0,0,0,0.10)" }
@@ -277,9 +209,7 @@ function LoginForm() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--text-muted)" }}>
-                อีเมล
-              </label>
+              <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--text-muted)" }}>อีเมล</label>
               <input
                 type="email"
                 value={email}
@@ -292,13 +222,11 @@ function LoginForm() {
 
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-xs font-medium" style={{ color: "var(--text-muted)" }}>
-                  รหัสผ่าน
-                </label>
+                <label className="block text-xs font-medium" style={{ color: "var(--text-muted)" }}>รหัสผ่าน</label>
                 {mode === "login" && (
                   <button
                     type="button"
-                    onClick={() => { setStep("forgot"); setError("") }}
+                    onClick={goToForgot}
                     className="text-xs hover:opacity-80 transition-opacity"
                     style={{ color: "var(--text-faint)" }}
                   >

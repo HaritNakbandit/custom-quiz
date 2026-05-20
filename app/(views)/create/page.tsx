@@ -1,11 +1,9 @@
 "use client"
 
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Sparkles } from "lucide-react"
-import { useState, useEffect } from "react"
-import { useCustomQuizzes } from "@/hooks/useCustomQuizzes"
-import { useProfile } from "@/hooks/useProfile"
-import { useQuizForm, toQuestion } from "@/hooks/useQuizForm"
+import { useCreateQuiz } from "@/hooks/useCreateQuiz"
 import AIGeneratePanel from "@/components/AIGeneratePanel"
 import ErrorAlert from "@/components/ErrorAlert"
 import QuizFormBody from "@/components/QuizFormBody"
@@ -13,42 +11,8 @@ import { accentGradient, accentHover, accentShadow, accentShadowSm } from "@/lib
 
 export default function CreateQuizPage() {
   const router = useRouter()
-  const { saveQuiz, uploadCoverImage, customQuizzes, userId, loading: quizzesLoading } = useCustomQuizzes()
-  const { isAdmin, role, loading: profileLoading } = useProfile()
+  const { form, handleSubmit } = useCreateQuiz()
   const [showAI, setShowAI] = useState(false)
-  const form = useQuizForm()
-
-  useEffect(() => {
-    if (profileLoading || quizzesLoading) return
-    const myQuizCount = customQuizzes.filter((q) => q.user_id === userId).length
-    if (!isAdmin && role === "user" && myQuizCount >= 1) {
-      router.replace("/")
-    }
-  }, [profileLoading, quizzesLoading, isAdmin, role, customQuizzes, userId, router])
-
-  async function handleSubmit() {
-    const errs = form.validate()
-    if (errs.length > 0) return
-    form.setSaving(true)
-
-    let coverUrl = form.coverUrl
-    if (form.pendingCoverFile) {
-      coverUrl = await uploadCoverImage(form.pendingCoverFile)
-    }
-
-    await saveQuiz({
-      id: `custom-${Date.now()}`,
-      title: form.title.trim(),
-      description: form.description.trim() || "Custom quiz",
-      category: form.category.trim(),
-      icon: form.icon,
-      color: form.color,
-      cover_url: coverUrl,
-      questions: form.questions.map((q, i) => toQuestion(q, i + 1)),
-      time_limit_seconds: form.timeLimitSeconds,
-    })
-    router.push("/")
-  }
 
   return (
     <div className="min-h-screen bg-background px-4 py-12 relative overflow-hidden transition-colors duration-300">

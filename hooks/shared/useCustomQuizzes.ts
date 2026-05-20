@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { Quiz } from "@/data/quizzes"
+import { Quiz } from "@/types/quizzes"
 import { createClient } from "@/lib/supabase/client"
 
 const supabase = createClient()

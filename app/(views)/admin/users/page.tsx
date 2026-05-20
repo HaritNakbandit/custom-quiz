@@ -1,22 +1,9 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Shield, CheckCircle, XCircle } from "lucide-react"
-import { useProfile } from "@/hooks/useProfile"
 import { accentGradient, accentHover, accentShadowSm } from "@/lib/theme"
-
-interface UserRecord {
-  id: string
-  email: string
-  created_at: string
-  email_confirmed_at: string | null
-  role: "admin" | "user"
-}
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" })
-}
+import { useAdminUsers, formatDate } from "@/hooks/useAdminUsers"
 
 function AdminUsersSkeleton() {
   return (
@@ -50,35 +37,9 @@ function AdminUsersSkeleton() {
 
 export default function AdminUsersPage() {
   const router = useRouter()
-  const { isAdmin, loading: profileLoading } = useProfile()
-  const [users, setUsers] = useState<UserRecord[]>([])
-  const [loading, setLoading] = useState(true)
-  const [updating, setUpdating] = useState<string | null>(null)
+  const { users, loading, updating, toggleRole } = useAdminUsers()
 
-  useEffect(() => {
-    if (profileLoading) return
-    if (!isAdmin) { router.replace("/"); return }
-
-    fetch("/api/admin/users")
-      .then((r) => r.json())
-      .then((data) => { setUsers(data); setLoading(false) })
-  }, [isAdmin, profileLoading, router])
-
-  async function toggleRole(user: UserRecord) {
-    const newRole = user.role === "admin" ? "user" : "admin"
-    setUpdating(user.id)
-    const res = await fetch("/api/admin/users", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: user.id, role: newRole }),
-    })
-    if (res.ok) {
-      setUsers((prev) => prev.map((u) => u.id === user.id ? { ...u, role: newRole } : u))
-    }
-    setUpdating(null)
-  }
-
-  if (profileLoading || loading) return <AdminUsersSkeleton />
+  if (loading) return <AdminUsersSkeleton />
 
   const adminCount = users.filter((u) => u.role === "admin").length
 

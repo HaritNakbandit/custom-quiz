@@ -22,11 +22,22 @@ Read `node_modules/next/dist/docs/` for the exact Next.js version in use. APIs a
 
 ## State & data
 - All quiz data lives in Supabase — never use localStorage
-- `quizzes` table: all quizzes, fetched via `useCustomQuizzes` (returns `userId` for ownership checks)
-- `quiz_attempts` table: one row per quiz submission — written in `quiz/[id]/page.tsx → handleSubmit`, NOT in results page (avoids duplicate on refresh)
-- `profiles` table: roles — use `useProfile()` to get `{ role, isAdmin }`
+- `quizzes` table: all quizzes, fetched via `useCustomQuizzes` from `hooks/shared/` (returns `userId` for ownership checks)
+- `quiz_attempts` table: one row per quiz submission — written in `useQuizSession → handleSubmit`, NOT in results page (avoids duplicate on refresh)
+- `profiles` table: roles — use `useProfile()` from `hooks/shared/` to get `{ role, isAdmin }`
 - Never read `profiles` table directly; never write to it from client code
 - Supabase browser client must be created at **module level** (singleton), not inside components or hooks
+
+## Hooks & lib structure
+- **`lib/`** — pure functions only, no React state or side effects. Testable without mocking.
+  - `dateUtils.ts` — `formatDate`, `formatAttemptDate`, `formatTime`
+  - `quizUtils.ts` — `emptyQuestion`, `toDraftQuestion`, `toQuestion`
+  - `quizValidation.ts` — `validateQuizForm`
+  - `gradeUtils.ts` — `getGradeInfo`
+- **`hooks/shared/`** — hooks used by both pages and components (`useCustomQuizzes`, `useProfile`)
+- **`hooks/`** — page-specific hooks, one per page. Pages must contain UI only — no `useState`/`useEffect`/`fetch` directly in page components.
+- Pure helpers that live in hook files (e.g. `formatDate` in `useAdminUsers`) must be extracted to `lib/` instead, then re-exported from the hook for backwards compatibility.
+- Domain types (`interface`) that are exported and used across multiple files belong in `types/` — not inside hook files. Hooks re-export them: `export type { Foo } from "@/types/foo"`.
 
 ## Auth & roles
 - `proxy.ts` is Next.js 16's replacement for `middleware.ts` — do NOT create `middleware.ts`

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { LogOut, User, Clock, Shield } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
-import { useProfile } from "@/hooks/useProfile"
+import { useProfile } from "@/hooks/shared/useProfile"
 import { accentIconGradient } from "@/lib/theme"
 import type { User as SupabaseUser } from "@supabase/supabase-js"
 

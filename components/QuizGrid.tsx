@@ -5,7 +5,7 @@ import { createPortal } from "react-dom"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { FileText, ChevronRight, MoreVertical, Pencil, Trash2, X, Search, Timer } from "lucide-react"
-import { useCustomQuizzes } from "@/hooks/useCustomQuizzes"
+import { useCustomQuizzes } from "@/hooks/shared/useCustomQuizzes"
 import { QuizIcon } from "@/lib/quizIcons"
 import { accentLabel, accentMenuHover, accentGradient, accentText } from "@/lib/theme"
 

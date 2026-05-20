@@ -1,3 +1,14 @@
+export interface QuizAttempt {
+  id: string
+  quiz_id: string
+  quiz_title: string
+  quiz_icon: string
+  quiz_color: string
+  score: number
+  total: number
+  created_at: string
+}
+
 export interface DraftQuestion {
   question: string
   options: string[]

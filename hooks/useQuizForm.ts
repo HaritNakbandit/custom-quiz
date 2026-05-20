@@ -1,32 +1,11 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Quiz, Question, DraftQuestion } from "@/data/quizzes"
+import { Quiz, DraftQuestion } from "@/types/quizzes"
 import { validateQuizForm } from "@/lib/quizValidation"
+import { emptyQuestion, toDraftQuestion } from "@/lib/quizUtils"
 import type { GeneratedResult } from "@/hooks/useAIQuizGeneration"
-
-export function emptyQuestion(): DraftQuestion {
-  return { question: "", options: ["", "", "", ""], correctIndex: 0, explanation: "" }
-}
-
-export function toDraftQuestion(q: Question): DraftQuestion {
-  return {
-    question: q.question,
-    options: [...q.options],
-    correctIndex: q.correctIndex,
-    explanation: q.explanation ?? "",
-  }
-}
-
-export function toQuestion(q: DraftQuestion, id: number): Question {
-  return {
-    id,
-    question: q.question.trim(),
-    options: q.options.map((o) => o.trim()),
-    correctIndex: q.correctIndex,
-    explanation: q.explanation.trim() || undefined,
-  }
-}
+export { emptyQuestion, toDraftQuestion, toQuestion } from "@/lib/quizUtils"
 
 export function useQuizForm(initial?: Quiz | null) {
   const [title, setTitle] = useState(initial?.title ?? "")

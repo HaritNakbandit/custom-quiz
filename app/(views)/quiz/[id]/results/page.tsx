@@ -1,31 +1,15 @@
 "use client"
 
-import { useSearchParams, useRouter } from "next/navigation"
-import { use, Suspense, useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import { use, Suspense } from "react"
 import { Check, X, Lightbulb } from "lucide-react"
-import { createClient } from "@/lib/supabase/client"
-import { Quiz } from "@/data/quizzes"
 import { getGradeInfo } from "@/lib/gradeUtils"
 import { accentGradient, accentHover, accentShadow, accentLabel } from "@/lib/theme"
-
-const supabase = createClient()
+import { useQuizResults } from "@/hooks/useQuizResults"
 
 function ResultsContent({ id }: { id: string }) {
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const score = parseInt(searchParams.get("score") ?? "0")
-  const total = parseInt(searchParams.get("total") ?? "1")
-  const quizTitle = searchParams.get("title") ?? ""
-  const answersParam = searchParams.get("answers") ?? ""
-  const userAnswers = answersParam ? answersParam.split(",").map(Number) : []
-  const percent = Math.round((score / total) * 100)
-
-  const [quiz, setQuiz] = useState<Quiz | null>(null)
-
-  useEffect(() => {
-    supabase.from("quizzes").select("*").eq("id", id).single()
-      .then(({ data }) => { if (data) setQuiz(data as Quiz) })
-  }, [id])
+  const { quiz, score, total, quizTitle, userAnswers, percent } = useQuizResults(id)
 
   const grade = getGradeInfo(percent)
   const circumference = 2 * Math.PI * 15.9

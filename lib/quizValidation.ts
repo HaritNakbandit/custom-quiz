@@ -1,4 +1,4 @@
-import type { DraftQuestion } from "@/data/quizzes"
+import type { DraftQuestion } from "@/types/quizzes"
 
 export function validateQuizForm(
   title: string,

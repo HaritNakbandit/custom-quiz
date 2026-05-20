@@ -1,16 +1,12 @@
 "use client"
 
-import { useState, useEffect, useRef, useCallback } from "react"
-import { useRouter } from "next/navigation"
 import { use } from "react"
+import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { ChevronLeft, ChevronRight, Send, Timer } from "lucide-react"
-import { Quiz } from "@/data/quizzes"
-import { createClient } from "@/lib/supabase/client"
 import { QuizIcon } from "@/lib/quizIcons"
 import { accentGradient, accentOptionSelected, accentOptionHover, accentOptionText, accentSkeletonLabel } from "@/lib/theme"
-
-const supabase = createClient()
+import { useQuizSession, formatTime } from "@/hooks/useQuizSession"
 
 function QuizSkeleton() {
   return (
@@ -61,83 +57,20 @@ function QuizSkeleton() {
 export default function QuizPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const router = useRouter()
-  const [quiz, setQuiz] = useState<Quiz | undefined>(undefined)
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [answers, setAnswers] = useState<(number | null)[]>([])
-  const [timeLeft, setTimeLeft] = useState<number | null>(null)
-  const timesUp = timeLeft === 0
-  const submitRef = useRef<(() => void) | null>(null)
-
-  useEffect(() => {
-    async function loadQuiz() {
-      const { data } = await supabase.from("quizzes").select("*").eq("id", id).single()
-      if (data) {
-        setQuiz(data as Quiz)
-        setAnswers(new Array((data as Quiz).questions.length).fill(null))
-        if ((data as Quiz).time_limit_seconds) {
-          setTimeLeft((data as Quiz).time_limit_seconds!)
-        }
-      }
-    }
-    loadQuiz()
-  }, [id])
-
-  useEffect(() => {
-    if (timesUp) {
-      submitRef.current?.()
-      return
-    }
-    if (timeLeft === null) return
-    const t = setTimeout(() => setTimeLeft((v) => (v !== null ? v - 1 : null)), 1000)
-    return () => clearTimeout(t)
-  }, [timeLeft, timesUp])
-
-  const handleSubmit = useCallback(async () => {
-    if (!quiz) return
-    const finalAnswers = answers.map((a) => (a === null ? 0 : a))
-    const score = finalAnswers.filter((a, i) => a === quiz.questions[i].correctIndex).length
-
-    const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
-      await supabase.from("quiz_attempts").insert({
-        user_id: user.id,
-        quiz_id: id,
-        quiz_title: quiz.title,
-        quiz_icon: quiz.icon,
-        quiz_color: quiz.color,
-        score,
-        total: quiz.questions.length,
-        answers: finalAnswers,
-      })
-    }
-
-    router.push(
-      `/quiz/${id}/results?score=${score}&total=${quiz.questions.length}&title=${encodeURIComponent(quiz.title)}&answers=${finalAnswers.join(",")}`
-    )
-  }, [answers, id, quiz, router])
-
-  useEffect(() => { submitRef.current = handleSubmit }, [handleSubmit])
+  const {
+    quiz,
+    currentIndex, setCurrentIndex,
+    timeLeft, timesUp,
+    selectedOption,
+    answeredCount, allAnswered,
+    handleSelect, handleSubmit,
+  } = useQuizSession(id)
 
   if (!quiz) return <QuizSkeleton />
 
   const question = quiz.questions[currentIndex]
   const navyCls = accentGradient
-  const selectedOption = answers[currentIndex]
-  const answeredCount = answers.filter((a) => a !== null).length
-  const allAnswered = answeredCount === quiz.questions.length
-
-  function formatTime(s: number) {
-    const m = Math.floor(s / 60)
-    return `${m}:${String(s % 60).padStart(2, "0")}`
-  }
-
-  function handleSelect(index: number) {
-    setAnswers((prev) => {
-      const next = [...prev]
-      next[currentIndex] = index
-      return next
-    })
-  }
+  const isUrgent = timesUp || (timeLeft !== null && timeLeft < 30)
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12 relative overflow-hidden transition-colors duration-300">
@@ -168,23 +101,23 @@ export default function QuizPage({ params }: { params: Promise<{ id: string }> }
               </span>
             </div>
 
-            {/* Bottom: timer + progress */}
-            <div className="absolute inset-x-0 bottom-0 px-4 pb-4 space-y-2">
-              {timeLeft !== null && quiz.time_limit_seconds && (
+            {/* Bottom: timer */}
+            {timeLeft !== null && quiz.time_limit_seconds && (
+              <div className="absolute inset-x-0 bottom-0 px-4 pb-4 space-y-2">
                 <div className="flex items-center gap-3">
-                  <Timer size={16} className={timesUp || timeLeft < 30 ? "text-red-400" : "text-white/80"} />
+                  <Timer size={16} className={isUrgent ? "text-red-400" : "text-white/80"} />
                   <div className="flex-1 h-1.5 rounded-full overflow-hidden bg-white/20">
                     <div
-                      className={`h-full rounded-full transition-all duration-1000 ${timesUp || timeLeft < 30 ? "bg-red-400" : timeLeft < quiz.time_limit_seconds * 0.25 ? "bg-amber-400" : "bg-white"}`}
+                      className={`h-full rounded-full transition-all duration-1000 ${isUrgent ? "bg-red-400" : timeLeft < quiz.time_limit_seconds * 0.25 ? "bg-amber-400" : "bg-white"}`}
                       style={{ width: `${Math.max(0, (timeLeft / quiz.time_limit_seconds) * 100)}%` }}
                     />
                   </div>
-                  <span className={`text-sm font-mono font-bold w-12 text-right ${timesUp || timeLeft < 30 ? "text-red-400" : "text-white"}`}>
+                  <span className={`text-sm font-mono font-bold w-12 text-right ${isUrgent ? "text-red-400" : "text-white"}`}>
                     {timesUp ? "0:00" : formatTime(timeLeft)}
                   </span>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         ) : (
           /* — without cover image: glass card — */
@@ -211,28 +144,27 @@ export default function QuizPage({ params }: { params: Promise<{ id: string }> }
             {timeLeft !== null && quiz.time_limit_seconds && (
               <>
                 <div className="h-px mx-4" style={{ background: "var(--glass-border)" }} />
-                <div className={`px-4 py-3 transition-colors rounded-b-2xl ${timesUp || timeLeft < 30 ? "bg-red-500/8" : ""}`}>
+                <div className={`px-4 py-3 transition-colors rounded-b-2xl ${isUrgent ? "bg-red-500/8" : ""}`}>
                   <div className="flex items-center justify-between mb-1.5">
                     <div className="flex items-center gap-1.5">
-                      <Timer size={13} className={timesUp || timeLeft < 30 ? "text-red-500 dark:text-red-400" : ""} style={!(timesUp || timeLeft < 30) ? { color: "var(--text-muted)" } : undefined} />
-                      <span className={`text-xs font-medium ${timesUp || timeLeft < 30 ? "text-red-500 dark:text-red-400" : ""}`} style={!(timesUp || timeLeft < 30) ? { color: "var(--text-muted)" } : undefined}>
+                      <Timer size={13} className={isUrgent ? "text-red-500 dark:text-red-400" : ""} style={!isUrgent ? { color: "var(--text-muted)" } : undefined} />
+                      <span className={`text-xs font-medium ${isUrgent ? "text-red-500 dark:text-red-400" : ""}`} style={!isUrgent ? { color: "var(--text-muted)" } : undefined}>
                         {timesUp ? "หมดเวลา!" : "เวลาที่เหลือ"}
                       </span>
                     </div>
-                    <span className={`text-base font-mono font-bold ${timesUp || timeLeft < 30 ? "text-red-500 dark:text-red-400" : ""}`} style={!(timesUp || timeLeft < 30) ? { color: "var(--foreground)" } : undefined}>
+                    <span className={`text-base font-mono font-bold ${isUrgent ? "text-red-500 dark:text-red-400" : ""}`} style={!isUrgent ? { color: "var(--foreground)" } : undefined}>
                       {timesUp ? "0:00" : formatTime(timeLeft)}
                     </span>
                   </div>
                   <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--input-bg)" }}>
                     <div
-                      className={`h-full rounded-full transition-all duration-1000 ${timesUp || timeLeft < 30 ? "bg-red-500" : timeLeft < quiz.time_limit_seconds * 0.25 ? "bg-amber-500" : `bg-linear-to-r ${navyCls}`}`}
+                      className={`h-full rounded-full transition-all duration-1000 ${isUrgent ? "bg-red-500" : timeLeft < quiz.time_limit_seconds * 0.25 ? "bg-amber-500" : `bg-linear-to-r ${navyCls}`}`}
                       style={{ width: `${Math.max(0, (timeLeft / quiz.time_limit_seconds) * 100)}%` }}
                     />
                   </div>
                 </div>
               </>
             )}
-
           </div>
         )}
 

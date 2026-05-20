@@ -1,26 +1,12 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { RotateCcw, Inbox } from "lucide-react"
-import { createClient } from "@/lib/supabase/client"
 import { QuizIcon, COLOR_MAP } from "@/lib/quizIcons"
 import { getGradeInfo } from "@/lib/gradeUtils"
 import ScoreBar from "@/components/ScoreBar"
 import { accentGradient, accentHover } from "@/lib/theme"
-
-interface QuizAttempt {
-  id: string
-  quiz_id: string
-  quiz_title: string
-  quiz_icon: string
-  quiz_color: string
-  score: number
-  total: number
-  created_at: string
-}
-
-const supabase = createClient()
+import { useQuizHistory, formatAttemptDate } from "@/hooks/useQuizHistory"
 
 function HistorySkeleton() {
   return (
@@ -44,31 +30,10 @@ function HistorySkeleton() {
   )
 }
 
-function formatDate(iso: string) {
-  const d = new Date(iso)
-  const now = new Date()
-  const diffDays = Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24))
-  const time = d.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" })
-  if (diffDays === 0) return `วันนี้ ${time}`
-  if (diffDays === 1) return `เมื่อวาน ${time}`
-  return d.toLocaleDateString("th-TH", { day: "numeric", month: "short" }) + ` ${time}`
-}
 
 export default function HistoryPage() {
   const router = useRouter()
-  const [attempts, setAttempts] = useState<QuizAttempt[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    supabase
-      .from("quiz_attempts")
-      .select("id, quiz_id, quiz_title, quiz_icon, quiz_color, score, total, created_at")
-      .order("created_at", { ascending: false })
-      .then(({ data }) => {
-        if (data) setAttempts(data as QuizAttempt[])
-        setLoading(false)
-      })
-  }, [])
+  const { attempts, loading } = useQuizHistory()
 
   return (
     <div className="min-h-screen bg-background px-4 py-12 relative overflow-hidden transition-colors duration-300">
@@ -129,7 +94,7 @@ export default function HistoryPage() {
                     </p>
                     <ScoreBar percent={percent} gradient={colorCls} height="h-1.5" />
                     <p className="text-xs mt-1.5" style={{ color: "var(--text-faint)" }}>
-                      {formatDate(a.created_at)}
+                      {formatAttemptDate(a.created_at)}
                     </p>
                   </div>
 

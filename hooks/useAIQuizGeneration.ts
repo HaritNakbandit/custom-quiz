@@ -1,19 +1,8 @@
 "use client"
 
 import { useState } from "react"
-
-export interface GeneratedQuestion {
-  question: string
-  options: string[]
-  correctIndex: number
-  explanation: string
-}
-
-export interface GeneratedResult {
-  questions: GeneratedQuestion[]
-  suggestedTitle?: string
-  suggestedCategory?: string
-}
+import type { GeneratedResult } from "@/types/ai"
+export type { GeneratedQuestion, GeneratedResult } from "@/types/ai"
 
 interface Message {
   role: "user" | "model"

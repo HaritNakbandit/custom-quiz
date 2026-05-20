@@ -2,8 +2,8 @@
 
 import Link from "next/link"
 import { Plus } from "lucide-react"
-import { useProfile } from "@/hooks/useProfile"
-import { useCustomQuizzes } from "@/hooks/useCustomQuizzes"
+import { useProfile } from "@/hooks/shared/useProfile"
+import { useCustomQuizzes } from "@/hooks/shared/useCustomQuizzes"
 import { accentGradient, accentHover, accentShadowLight } from "@/lib/theme"
 
 export default function CreateQuizButton() {
