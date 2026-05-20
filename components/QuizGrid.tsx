@@ -4,8 +4,8 @@ import { useState, useMemo, useRef, useEffect } from "react"
 import { createPortal } from "react-dom"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
-import { FileText, ChevronRight, MoreVertical, Pencil, Trash2, X, Search, Timer } from "lucide-react"
-import { useCustomQuizzes } from "@/hooks/shared/useCustomQuizzes"
+import { FileText, ChevronRight, MoreVertical, Pencil, Trash2, X, Search, Timer, Loader2 } from "lucide-react"
+import { usePaginatedQuizzes } from "@/hooks/usePaginatedQuizzes"
 import { QuizIcon } from "@/lib/quizIcons"
 import { accentLabel, accentMenuHover, accentGradient, accentText } from "@/lib/theme"
 
@@ -139,23 +139,23 @@ function QuizMenu({ quizId, quizTitle, onDelete, onCover }: { quizId: string; qu
 
 export default function QuizGrid() {
   const router = useRouter()
-  const { customQuizzes, loading, userId, deleteQuiz } = useCustomQuizzes()
+  const { quizzes, loading, loadingMore, hasMore, userId, deleteQuiz, loadMore } = usePaginatedQuizzes()
   const [search, setSearch] = useState("")
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
 
   const categories = useMemo(
-    () => [...new Set(customQuizzes.map((q) => q.category).filter(Boolean))].sort(),
-    [customQuizzes]
+    () => [...new Set(quizzes.map((q) => q.category).filter(Boolean))].sort(),
+    [quizzes]
   )
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
-    return customQuizzes.filter((quiz) => {
+    return quizzes.filter((quiz) => {
       const matchSearch = !q || quiz.title.toLowerCase().includes(q) || quiz.description.toLowerCase().includes(q)
       const matchCategory = !activeCategory || quiz.category === activeCategory
       return matchSearch && matchCategory
     })
-  }, [customQuizzes, search, activeCategory])
+  }, [quizzes, search, activeCategory])
 
   if (loading) return <QuizGridSkeleton />
 
@@ -236,6 +236,7 @@ export default function QuizGrid() {
           </button>
         </div>
       ) : (
+        <>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {filtered.map((quiz, idx) => {
             const isOwner = quiz.user_id === userId
@@ -307,6 +308,21 @@ export default function QuizGrid() {
             )
           })}
         </div>
+
+        {hasMore && !search && !activeCategory && (
+          <div className="flex justify-center mt-8">
+            <button
+              onClick={loadMore}
+              disabled={loadingMore}
+              className="flex items-center gap-2 px-6 py-2.5 rounded-xl glass hover:opacity-80 transition-opacity disabled:opacity-40 text-sm font-medium"
+              style={{ color: "var(--text-muted)" }}
+            >
+              {loadingMore ? <Loader2 size={15} className="animate-spin" /> : null}
+              {loadingMore ? "กำลังโหลด..." : "โหลดเพิ่มเติม"}
+            </button>
+          </div>
+        )}
+        </>
       )}
     </div>
   )

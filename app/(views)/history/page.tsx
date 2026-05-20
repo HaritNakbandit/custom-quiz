@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { RotateCcw, Inbox } from "lucide-react"
+import { RotateCcw, Inbox, Loader2 } from "lucide-react"
 import { QuizIcon, COLOR_MAP } from "@/lib/quizIcons"
 import { getGradeInfo } from "@/lib/gradeUtils"
 import ScoreBar from "@/components/ScoreBar"
@@ -33,7 +33,7 @@ function HistorySkeleton() {
 
 export default function HistoryPage() {
   const router = useRouter()
-  const { attempts, loading } = useQuizHistory()
+  const { attempts, loading, loadingMore, hasMore, loadMore } = useQuizHistory()
 
   return (
     <div className="min-h-screen bg-background px-4 py-12 relative overflow-hidden transition-colors duration-300">
@@ -52,7 +52,7 @@ export default function HistoryPage() {
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">ประวัติการทำข้อสอบ</h1>
             <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-              {loading ? "กำลังโหลด..." : attempts.length === 0 ? "ยังไม่มีประวัติ" : `${attempts.length} ครั้ง`}
+              {loading ? "กำลังโหลด..." : attempts.length === 0 ? "ยังไม่มีประวัติ" : `${attempts.length}${hasMore ? "+" : ""} ครั้ง`}
             </p>
           </div>
         </div>
@@ -78,7 +78,8 @@ export default function HistoryPage() {
 
         {/* Attempt list */}
         {!loading && attempts.length > 0 && (
-          <div className="space-y-3 animate-float-up">
+          <div className="animate-float-up">
+          <div className="space-y-3">
             {attempts.map((a) => {
               const percent = Math.round((a.score / a.total) * 100)
               const grade = getGradeInfo(percent)
@@ -118,6 +119,21 @@ export default function HistoryPage() {
                 </div>
               )
             })}
+          </div>
+
+          {hasMore && (
+            <div className="flex justify-center mt-6">
+              <button
+                onClick={loadMore}
+                disabled={loadingMore}
+                className="flex items-center gap-2 px-6 py-2.5 rounded-xl glass hover:opacity-80 transition-opacity disabled:opacity-40 text-sm font-medium"
+                style={{ color: "var(--text-muted)" }}
+              >
+                {loadingMore && <Loader2 size={15} className="animate-spin" />}
+                {loadingMore ? "กำลังโหลด..." : "โหลดเพิ่มเติม"}
+              </button>
+            </div>
+          )}
           </div>
         )}
       </div>
