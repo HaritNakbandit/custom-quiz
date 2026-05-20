@@ -1,3 +1,14 @@
+# [1.5.0](https://github.com/HaritNakbandit/custom-quiz/compare/v1.4.0...v1.5.0) (2026-05-20)
+
+
+### Chores
+
+* upgrade all dependencies to latest: @google/genai 2.x, @anthropic-ai/sdk 0.97, typescript 6, tailwindcss 4.3, next 16.2.6, react 19.2.6
+* fix setState-in-effect lint error in timer by deriving `timesUp` from `timeLeft`
+* replace `<img>` with `next/image` and add Supabase Storage remotePatterns
+* fix unused theme imports in admin and login pages
+
+
 # [1.4.0](https://github.com/HaritNakbandit/custom-quiz/compare/v1.3.0...v1.4.0) (2026-05-19)
 
 
