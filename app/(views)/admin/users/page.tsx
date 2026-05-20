@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Shield, CheckCircle, XCircle } from "lucide-react"
 import { useProfile } from "@/hooks/useProfile"
-import { accentGradient, accentHover, accentLabel, accentShadowSm } from "@/lib/theme"
+import { accentGradient, accentHover, accentShadowSm } from "@/lib/theme"
 
 interface UserRecord {
   id: string

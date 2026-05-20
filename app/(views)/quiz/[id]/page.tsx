@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { use } from "react"
+import Image from "next/image"
 import { ChevronLeft, ChevronRight, Send, Timer } from "lucide-react"
 import { Quiz } from "@/data/quizzes"
 import { createClient } from "@/lib/supabase/client"
@@ -64,7 +65,7 @@ export default function QuizPage({ params }: { params: Promise<{ id: string }> }
   const [currentIndex, setCurrentIndex] = useState(0)
   const [answers, setAnswers] = useState<(number | null)[]>([])
   const [timeLeft, setTimeLeft] = useState<number | null>(null)
-  const [timesUp, setTimesUp] = useState(false)
+  const timesUp = timeLeft === 0
   const submitRef = useRef<(() => void) | null>(null)
 
   useEffect(() => {
@@ -82,12 +83,11 @@ export default function QuizPage({ params }: { params: Promise<{ id: string }> }
   }, [id])
 
   useEffect(() => {
-    if (timeLeft === null || timesUp) return
-    if (timeLeft === 0) {
-      setTimesUp(true)
+    if (timesUp) {
       submitRef.current?.()
       return
     }
+    if (timeLeft === null) return
     const t = setTimeout(() => setTimeLeft((v) => (v !== null ? v - 1 : null)), 1000)
     return () => clearTimeout(t)
   }, [timeLeft, timesUp])
@@ -148,7 +148,7 @@ export default function QuizPage({ params }: { params: Promise<{ id: string }> }
         {quiz.cover_url ? (
           /* — with cover image — */
           <div className="relative rounded-2xl overflow-hidden mb-5 h-56">
-            <img src={quiz.cover_url} alt={quiz.title} className="w-full h-full object-cover" />
+            <Image src={quiz.cover_url} alt={quiz.title} fill className="object-cover" />
             <div className="absolute inset-0 bg-linear-to-b from-black/50 via-black/5 to-black/75" />
 
             {/* Nav row */}

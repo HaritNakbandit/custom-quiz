@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useRef, useEffect } from "react"
 import { createPortal } from "react-dom"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { FileText, ChevronRight, MoreVertical, Pencil, Trash2, X, Search, Timer } from "lucide-react"
 import { useCustomQuizzes } from "@/hooks/useCustomQuizzes"
@@ -251,7 +252,7 @@ export default function QuizGrid() {
                   {/* Cover background */}
                   {quiz.cover_url && (
                     <>
-                      <img src={quiz.cover_url} alt={quiz.title} className="absolute inset-0 w-full h-full object-cover" />
+                      <Image src={quiz.cover_url} alt={quiz.title} fill className="object-cover" />
                       <div className="absolute inset-0 bg-linear-to-b from-black/55 via-black/60 to-black/85" />
                     </>
                   )}

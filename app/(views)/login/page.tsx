@@ -4,7 +4,7 @@ import { useState, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Sparkles } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
-import { accentGradient, accentHover, accentIconGradient, accentHeroGradient, accentHeroDark, accentShadow, accentShadowLight } from "@/lib/theme"
+import { accentGradient, accentHover, accentIconGradient, accentHeroGradient, accentHeroDark, accentShadowLight } from "@/lib/theme"
 
 const supabase = createClient()
 

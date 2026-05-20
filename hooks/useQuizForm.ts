@@ -45,6 +45,7 @@ export function useQuizForm(initial?: Quiz | null) {
 
   useEffect(() => {
     if (!initial) return
+    /* eslint-disable react-hooks/set-state-in-effect */
     setTitle(initial.title)
     setDescription(initial.description)
     setCategory(initial.category)
@@ -54,6 +55,7 @@ export function useQuizForm(initial?: Quiz | null) {
     setTimeLimitSeconds(initial.time_limit_seconds ?? null)
     setCoverUrl(initial.cover_url ?? null)
     setPendingCoverFile(null)
+    /* eslint-enable react-hooks/set-state-in-effect */
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initial?.id])
 

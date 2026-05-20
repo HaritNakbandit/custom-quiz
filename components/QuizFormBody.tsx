@@ -72,6 +72,7 @@ export default function QuizFormBody({ form }: Props) {
           <label className="text-xs font-semibold uppercase tracking-wider mb-2 block" style={{ color: "var(--text-muted)" }}>Cover Image</label>
           {displayUrl ? (
             <div className="relative rounded-2xl overflow-hidden h-36">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={displayUrl} alt="cover" className="w-full h-full object-cover" />
               <button
                 onClick={handleRemoveCover}
