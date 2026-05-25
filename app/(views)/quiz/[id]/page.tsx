@@ -81,7 +81,7 @@ export default function QuizPage({ params }: { params: Promise<{ id: string }> }
         {quiz.cover_url ? (
           /* — with cover image — */
           <div className="relative rounded-2xl overflow-hidden mb-5 h-56">
-            <Image src={quiz.cover_url} alt={quiz.title} fill className="object-cover" />
+            <Image src={quiz.cover_url} alt={quiz.title} fill sizes="(max-width: 640px) 100vw, 672px" className="object-cover" />
             <div className="absolute inset-0 bg-linear-to-b from-black/50 via-black/5 to-black/75" />
 
             {/* Nav row */}

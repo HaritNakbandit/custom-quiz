@@ -253,7 +253,7 @@ export default function QuizGrid() {
                   {/* Cover background */}
                   {quiz.cover_url && (
                     <>
-                      <Image src={quiz.cover_url} alt={quiz.title} fill className="object-cover" />
+                      <Image src={quiz.cover_url} alt={quiz.title} fill sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw" className="object-cover" />
                       <div className="absolute inset-0 bg-linear-to-b from-black/55 via-black/60 to-black/85" />
                     </>
                   )}

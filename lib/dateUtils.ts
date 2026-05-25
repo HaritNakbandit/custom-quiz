@@ -5,8 +5,11 @@ export function formatDate(iso: string) {
 export function formatAttemptDate(iso: string) {
   const d = new Date(iso)
   const now = new Date()
-  const diffDays = Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24))
   const time = d.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" })
+  // Compare calendar dates (local time) — not raw millisecond difference
+  const dDay = new Date(d.getFullYear(), d.getMonth(), d.getDate())
+  const nowDay = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const diffDays = Math.round((nowDay.getTime() - dDay.getTime()) / (1000 * 60 * 60 * 24))
   if (diffDays === 0) return `วันนี้ ${time}`
   if (diffDays === 1) return `เมื่อวาน ${time}`
   return d.toLocaleDateString("th-TH", { day: "numeric", month: "short" }) + ` ${time}`
